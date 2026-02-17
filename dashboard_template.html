@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0f1a">
+  <link rel="manifest" href="manifest.json">
+  <title>📊 Life Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --card2: #1f1f35;
+      --border: #2a2a45;
+      --t1: #e8e8f0;
+      --t2: #8888aa;
+      --t3: #555577;
+      --blue: #4f8fff;
+      --purple: #8b5cf6;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --cyan: #06b6d4;
+      --deep: #6366f1;
+      --light-s: #38bdf8;
+      --rem: #a78bfa;
+      --awake-c: #fb923c;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh
+    }
+
+    .header {
+      text-align: center;
+      padding: 24px 16px 8px
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #4f8fff, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    .header p {
+      color: var(--t2);
+      font-size: .85rem;
+      margin-top: 4px
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10
+    }
+
+    .tab {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--t2);
+      padding: 8px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-family: inherit;
+      transition: .2s
+    }
+
+    .tab:hover {
+      border-color: var(--blue);
+      color: var(--t1)
+    }
+
+    .tab.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff
+    }
+
+    .tab-content {
+      display: none;
+      padding: 16px;
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    .tab-content.active {
+      display: block
+    }
+
+    /* Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      transition: .2s
+    }
+
+    .stat-card:hover {
+      background: var(--card2);
+      transform: translateY(-1px)
+    }
+
+    .stat-card .label {
+      font-size: .75rem;
+      color: var(--t2);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px
+    }
+
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1
+    }
+
+    .stat-card .sub {
+      font-size: .75rem;
+      color: var(--t3);
+      margin-top: 4px
+    }
+
+    .blue .value {
+      color: var(--blue)
+    }
+
+    .green .value {
+      color: var(--green)
+    }
+
+    .purple .value {
+      color: var(--purple)
+    }
+
+    .amber .value {
+      color: var(--amber)
+    }
+
+    .cyan .value {
+      color: var(--cyan)
+    }
+
+    .red .value {
+      color: var(--red)
+    }
+
+    /* Charts */
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px
+    }
+
+    .chart-card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px
+    }
+
+    .chart-card canvas {
+      max-height: 300px
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px
+    }
+
+    /* Period selector */
+    .period-sel {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap
+    }
+
+    .pbtn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--t2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .8rem;
+      font-family: inherit;
+      transition: .2s
+    }
+
+    .pbtn:hover {
+      border-color: var(--blue);
+      color: var(--t1)
+    }
+
+    .pbtn.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff
+    }
+
+    /* Report */
+    .report-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px
+    }
+
+    .report-card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px
+    }
+
+    .report-card h3 {
+      font-size: .9rem;
+      color: var(--t2);
+      margin: 12px 0 6px
+    }
+
+    .report-card ul {
+      list-style: none;
+      padding: 0
+    }
+
+    .report-card li {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem
+    }
+
+    .report-card li:last-child {
+      border: none
+    }
+
+    .diff-up {
+      color: var(--green)
+    }
+
+    .diff-down {
+      color: var(--red)
+    }
+
+    .diff-flat {
+      color: var(--t2)
+    }
+
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      margin: 8px 0
+    }
+
+    .comp-table th {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--t2);
+      font-weight: 500
+    }
+
+    .comp-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    /* Recent table */
+    .recent-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .8rem
+    }
+
+    .recent-table th {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--t2);
+      font-weight: 500
+    }
+
+    .recent-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .recent-table tr:hover {
+      background: var(--card2)
+    }
+
+    .score-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: .75rem
+    }
+
+    .score-high {
+      background: rgba(34, 197, 94, .15);
+      color: var(--green)
+    }
+
+    .score-mid {
+      background: rgba(245, 158, 11, .15);
+      color: var(--amber)
+    }
+
+    .score-low {
+      background: rgba(239, 68, 68, .15);
+      color: var(--red)
+    }
+
+    .bar-mini {
+      display: flex;
+      height: 5px;
+      border-radius: 3px;
+      overflow: hidden;
+      min-width: 80px
+    }
+
+    .bar-mini .seg {
+      height: 100%
+    }
+
+    /* Book list */
+    .book-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem
+    }
+
+    .book-item:last-child {
+      border: none
+    }
+
+    .book-badge {
+      font-size: .7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(34, 197, 94, .15);
+      color: var(--green)
+    }
+
+    .streak-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(79, 143, 255, .1), rgba(139, 92, 246, .1));
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px
+    }
+
+    .streak-num {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--amber)
+    }
+
+    .streak-label {
+      font-size: .85rem;
+      color: var(--t2)
+    }
+
+    .insight {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px
+    }
+
+    .insight .tag {
+      display: inline-block;
+      font-size: .7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-weight: 600
+    }
+
+    .insight .tag.positive {
+      background: rgba(34, 197, 94, .15);
+      color: var(--green)
+    }
+
+    .insight .tag.negative {
+      background: rgba(239, 68, 68, .15);
+      color: var(--red)
+    }
+
+    .insight .tag.neutral {
+      background: rgba(79, 143, 255, .15);
+      color: var(--blue)
+    }
+
+    .insight .msg {
+      font-size: .85rem;
+      line-height: 1.5
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--t3);
+      font-size: .7rem
+    }
+
+    @media(max-width:768px) {
+      .chart-row {
+        grid-template-columns: 1fr
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .header h1 {
+        font-size: 1.4rem
+      }
+
+      .tabs {
+        gap: 2px
+      }
+
+      .tab {
+        padding: 6px 12px;
+        font-size: .8rem
+      }
+    }
+
+    /* ===== READING TIMELINE ===== */
+    .tl-wrap {
+      overflow-x: auto;
+      padding-bottom: 16px
+    }
+
+    .tl-container {
+      position: relative;
+      min-height: 200px;
+      width: max-content;
+      min-width: 100%
+    }
+
+    .tl-axis {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--border)
+    }
+
+    .tl-months {
+      display: flex;
+      position: relative;
+      margin-bottom: 8px
+    }
+
+    .tl-month {
+      font-size: .7rem;
+      color: var(--t3);
+      text-align: center;
+      border-left: 1px solid var(--border);
+      padding-left: 6px;
+      min-width: 80px
+    }
+
+    .tl-book {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all .2s;
+      border: 2px solid transparent
+    }
+
+    .tl-book:hover {
+      transform: scale(1.8);
+      z-index: 10;
+      border-color: white
+    }
+
+    .tl-detail {
+      display: none;
+      position: fixed;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 300px;
+      z-index: 100;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .5)
+    }
+
+    .tl-detail.show {
+      display: block
+    }
+
+    .tl-detail-title {
+      font-size: .95rem;
+      color: var(--t1);
+      font-weight: 600;
+      margin-bottom: 4px
+    }
+
+    .tl-detail-author {
+      font-size: .8rem;
+      color: var(--t2);
+      margin-bottom: 8px
+    }
+
+    .tl-detail-meta {
+      font-size: .75rem;
+      color: var(--t3)
+    }
+
+    .tl-detail-genre {
+      display: inline-block;
+      font-size: .65rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px
+    }
+
+    .tl-filter {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap
+    }
+
+    .tl-filter button {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card);
+      color: var(--t2);
+      cursor: pointer;
+      font-size: .7rem;
+      transition: all .2s
+    }
+
+    .tl-filter button.active {
+      background: rgba(139, 92, 246, .2);
+      border-color: #8b5cf6;
+      color: #a78bfa
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>📊 Life Dashboard</h1>
+    <p id="subtitle"></p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="sleep">🌙 睡眠</button>
+    <button class="tab" data-tab="exercise">💪 運動</button>
+    <button class="tab" data-tab="reading">📚 読書</button>
+    <button class="tab" data-tab="timeline">📖 タイムライン</button>
+    <button class="tab" data-tab="correlation">📊 相関</button>
+    <button class="tab" data-tab="report">📋 レポート</button>
+  </div>
+
+  <!-- ===== SLEEP TAB ===== -->
+  <div class="tab-content active" id="tab-sleep">
+    <div class="period-sel" id="periodSel"></div>
+    <div class="stats-grid" id="sleepStats"></div>
+    <div class="chart-card">
+      <h2>📊 睡眠時間の推移</h2><canvas id="cHours"></canvas>
+    </div>
+    <div class="chart-card" id="scoreCard">
+      <h2>⭐ スコアの推移</h2><canvas id="cScore"></canvas>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2>🌙 就寝時刻</h2><canvas id="cBed"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2>🔵 睡眠構成</h2><canvas id="cComp"></canvas>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2>📅 曜日別</h2><canvas id="cDow"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2>📈 月別</h2><canvas id="cMonth"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h2>📋 直近の記録</h2>
+      <div style="overflow-x:auto">
+        <table class="recent-table" id="recentTbl"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EXERCISE TAB ===== -->
+  <div class="tab-content" id="tab-exercise">
+    <div class="stats-grid" id="exStats"></div>
+    <div class="chart-card">
+      <h2>🦵 筋トレの推移</h2><canvas id="cExercise"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>🚶 歩数の推移</h2><canvas id="cSteps"></canvas>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2>📅 曜日別 歩数</h2><canvas id="cStepsDow"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2>📈 月別 筋トレ実施率</h2><canvas id="cExMonth"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== READING TAB ===== -->
+  <div class="tab-content" id="tab-reading">
+    <div class="stats-grid" id="readStats"></div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2>🥧 ジャンル分布</h2><canvas id="cGenre"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2>📈 月別ジャンル読了</h2><canvas id="cMonthGenre"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h2>⏱️ 読了ペース（日数）</h2><canvas id="cPace"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>📚 読書リスト</h2>
+      <div id="bookList"></div>
+    </div>
+  </div>
+
+
+
+  <!-- ===== TIMELINE TAB ===== -->
+  <div class="tab-content" id="tab-timeline">
+    <div class="chart-card">
+      <h2>📖 読書タイムライン</h2>
+      <div class="tl-filter" id="tlFilter"></div>
+      <div class="tl-wrap">
+        <div class="tl-container" id="tlContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CORRELATION TAB ===== -->
+  <div class="tab-content" id="tab-correlation">
+    <div id="corrInsights"></div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2>💪 筋トレ日 vs 非筋トレ日の睡眠</h2><canvas id="cExVsSleep"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2>🚶 歩数 vs 深い睡眠</h2><canvas id="cStepsDeep"></canvas>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h2>🌙 就寝時刻 vs スコア</h2><canvas id="cBedScore"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2>📅 曜日パターン</h2><canvas id="cDowPattern"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REPORT TAB ===== -->
+  <div class="tab-content" id="tab-report">
+    <div id="reportContent"></div>
+  </div>
+
+  <div class="footer">Generated from Obsidian diary · <span id="genDate"></span></div>
+
+  <script>
+    const DATA = __DATA_JSON__;
+    const REPORT = __REPORT_JSON__;
+    let period = 0, charts = {};
+
+    function avg(a) { return a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0 }
+    function filt(days) { if (!days) return DATA; const c = new Date(); c.setDate(c.getDate() - days); return DATA.filter(d => new Date(d.date) >= c) }
+    function tDec(t) { if (!t) return null; const [h, m] = t.split(':').map(Number); return (h < 12 ? h + 24 : h) + m / 60 }
+    function decT(d) { if (d >= 24) d -= 24; return `${String(Math.floor(d)).padStart(2, '0')}:${String(Math.round((d % 1) * 60)).padStart(2, '0')}` }
+    function ma(arr, w) { return arr.map((_, i) => { const s = Math.max(0, i - w + 1); return avg(arr.slice(s, i + 1)) }) }
+    function tScale() { return { type: 'time', time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' }, ticks: { color: '#555577', maxTicksLimit: 10 }, grid: { color: '#1f1f35' } } }
+    function yAx(extra = {}) { return { ticks: { color: '#555577' }, grid: { color: '#1f1f35' }, ...extra } }
+
+    const chartOpts = { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#8888aa', font: { family: "'Inter','Noto Sans JP'", size: 11 } } } } };
+
+    function destroyAll() { Object.values(charts).forEach(c => c.destroy()); charts = {} }
+
+    // ===== TABS =====
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById('tab-' + t.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ===== PERIOD BUTTONS =====
+    function initPeriods() {
+      const el = document.getElementById('periodSel');
+      [['7日', 7], ['14日', 14], ['30日', 30], ['3ヶ月', 90], ['全期間', 0]].forEach(([l, v]) => {
+        const b = document.createElement('button');
+        b.className = 'pbtn' + (v === 0 ? ' active' : '');
+        b.textContent = l; b.dataset.p = v;
+        b.onclick = () => { document.querySelectorAll('.pbtn').forEach(x => x.classList.remove('active')); b.classList.add('active'); period = v; renderSleep() };
+        el.appendChild(b);
+      });
+    }
+
+    // ===== SLEEP TAB =====
+    function renderSleep() {
+      destroyAll();
+      const d = filt(period).filter(x => x.hours);
+      if (!d.length) return;
+      const hours = d.map(x => x.hours), scores = d.filter(x => x.score).map(x => x.score);
+      const beds = d.filter(x => x.bedtime).map(x => tDec(x.bedtime));
+      const deep = d.filter(x => x.deep != null).map(x => x.deep);
+      const steps = d.filter(x => x.steps).map(x => x.steps);
+      const aH = avg(hours), aS = avg(scores), aBed = avg(beds), aD = avg(deep);
+
+      document.getElementById('subtitle').textContent = `${d[0].date} 〜 ${d[d.length - 1].date} (${d.length}日)`;
+      document.getElementById('sleepStats').innerHTML = `
+    <div class="stat-card blue"><div class="label">平均睡眠</div><div class="value">${aH.toFixed(1)}h</div><div class="sub">最長${Math.max(...hours).toFixed(1)}h/最短${Math.min(...hours).toFixed(1)}h</div></div>
+    <div class="stat-card ${aS >= 90 ? 'green' : aS >= 80 ? 'amber' : 'red'}"><div class="label">平均スコア</div><div class="value">${scores.length ? aS.toFixed(0) : '—'}</div><div class="sub">${scores.length}日分</div></div>
+    <div class="stat-card purple"><div class="label">平均就寝</div><div class="value">${beds.length ? decT(aBed) : '—'}</div><div class="sub">${beds.length}日分</div></div>
+    <div class="stat-card cyan"><div class="label">深い睡眠</div><div class="value">${deep.length ? aD.toFixed(1) + 'h' : '—'}</div><div class="sub">${deep.length}日分</div></div>
+    <div class="stat-card amber"><div class="label">平均歩数</div><div class="value">${steps.length ? Math.round(avg(steps)).toLocaleString() : '—'}</div><div class="sub">${steps.length}日分</div></div>
+    <div class="stat-card green"><div class="label">記録日数</div><div class="value">${d.length}</div><div class="sub">日</div></div>`;
+
+      const dates = d.map(x => x.date), ma7 = ma(hours, 7);
+      charts.h = new Chart(document.getElementById('cHours'), {
+        type: 'bar', data: {
+          labels: dates, datasets: [
+            { label: '睡眠時間', data: hours, backgroundColor: hours.map(h => h >= 7 ? 'rgba(79,143,255,.5)' : h >= 6 ? 'rgba(245,158,11,.5)' : 'rgba(239,68,68,.5)'), borderRadius: 3, barPercentage: .7, order: 2 },
+            { label: '7日平均', data: ma7, type: 'line', borderColor: '#8b5cf6', borderWidth: 2, pointRadius: 0, tension: .4, order: 1 }
+          ]
+        }, options: { ...chartOpts, scales: { x: tScale(), y: yAx({ suggestedMin: 4, suggestedMax: 10 }) } }
+      });
+
+      const sd = d.filter(x => x.score);
+      if (sd.length) {
+        document.getElementById('scoreCard').style.display = '';
+        charts.s = new Chart(document.getElementById('cScore'), { type: 'line', data: { labels: sd.map(x => x.date), datasets: [{ label: 'スコア', data: sd.map(x => x.score), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.1)', fill: true, tension: .3, pointRadius: 2 }] }, options: { ...chartOpts, scales: { x: tScale(), y: yAx({ suggestedMin: 70, suggestedMax: 100 }) } } });
+      } else document.getElementById('scoreCard').style.display = 'none';
+
+      const bd = d.filter(x => x.bedtime);
+      if (bd.length) { charts.bed = new Chart(document.getElementById('cBed'), { type: 'scatter', data: { datasets: [{ label: '就寝', data: bd.map(x => ({ x: x.date, y: tDec(x.bedtime) })), backgroundColor: 'rgba(139,92,246,.6)', pointRadius: 3, pointHoverRadius: 6 }] }, options: { ...chartOpts, scales: { x: tScale(), y: yAx({ reverse: true, suggestedMin: 21, suggestedMax: 26, ticks: { color: '#555577', callback: v => decT(v) } }) } } }); }
+
+      const cd = d.filter(x => x.deep != null);
+      if (cd.length) {
+        charts.comp = new Chart(document.getElementById('cComp'), {
+          type: 'bar', data: {
+            labels: cd.map(x => x.date), datasets: [
+              { label: '深い', data: cd.map(x => x.deep || 0), backgroundColor: '#6366f1', stack: 's' },
+              { label: 'ライト', data: cd.map(x => x.light || 0), backgroundColor: '#38bdf8', stack: 's' },
+              { label: 'レム', data: cd.map(x => x.rem || 0), backgroundColor: '#a78bfa', stack: 's' },
+              { label: '覚醒', data: cd.map(x => x.awake || 0), backgroundColor: '#fb923c', stack: 's' }
+            ]
+          }, options: { ...chartOpts, scales: { x: tScale(), y: yAx({ stacked: true }) } }
+        });
+      }
+
+      const dn = ['日', '月', '火', '水', '木', '金', '土'], byD = Array.from({ length: 7 }, () => []);
+      d.forEach(x => { byD[new Date(x.date).getDay()].push(x.hours) });
+      charts.dow = new Chart(document.getElementById('cDow'), { type: 'bar', data: { labels: dn, datasets: [{ label: '平均', data: byD.map(a => a.length ? avg(a) : 0), backgroundColor: dn.map((_, i) => i === 0 || i === 6 ? 'rgba(239,68,68,.5)' : 'rgba(79,143,255,.5)'), borderRadius: 6 }] }, options: { ...chartOpts, scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' } }, y: yAx({ suggestedMin: 5, suggestedMax: 9 }) } } });
+
+      const byM = {}; d.forEach(x => { const m = x.date.slice(0, 7); (byM[m] = byM[m] || []).push(x.hours) });
+      const ms = Object.keys(byM).sort();
+      charts.mo = new Chart(document.getElementById('cMonth'), { type: 'bar', data: { labels: ms, datasets: [{ label: '平均', data: ms.map(m => avg(byM[m])), backgroundColor: 'rgba(6,182,212,.5)', borderRadius: 6 }] }, options: { ...chartOpts, scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' } }, y: yAx({ suggestedMin: 5, suggestedMax: 9 }) } } });
+
+      const rec = d.slice(-14).reverse();
+      document.getElementById('recentTbl').innerHTML = `<thead><tr><th>日付</th><th>睡眠</th><th>スコア</th><th>就寝</th><th>起床</th><th>構成</th><th style="max-width:150px">気分</th></tr></thead><tbody>${rec.map(x => {
+        const sc = x.score >= 90 ? 'score-high' : x.score >= 80 ? 'score-mid' : 'score-low';
+        const bar = x.deep != null ? `<div class="bar-mini"><div class="seg" style="width:${(x.deep / (x.hours || 1) * 100).toFixed(0)}%;background:var(--deep)"></div><div class="seg" style="width:${((x.light || 0) / (x.hours || 1) * 100).toFixed(0)}%;background:var(--light-s)"></div><div class="seg" style="width:${((x.rem || 0) / (x.hours || 1) * 100).toFixed(0)}%;background:var(--rem)"></div><div class="seg" style="width:${((x.awake || 0) / (x.hours || 1) * 100).toFixed(0)}%;background:var(--awake-c)"></div></div>` : '—';
+        return `<tr><td>${x.date}</td><td><strong>${x.hours.toFixed(1)}h</strong></td><td>${x.score ? `<span class="score-badge ${sc}">${x.score}</span>` : '—'}</td><td>${x.bedtime || '—'}</td><td>${x.waketime || '—'}</td><td>${bar}</td><td style="color:var(--t2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.mood || ''}</td></tr>`
+      }).join('')}</tbody>`;
+    }
+
+    // ===== EXERCISE TAB =====
+    function renderExercise() {
+      const d = DATA.filter(x => x.exercise || x.steps);
+      const exDays = DATA.filter(x => x.exercise);
+      const stepDays = DATA.filter(x => x.steps);
+      const allSteps = stepDays.map(x => x.steps);
+      const tenK = stepDays.filter(x => x.steps >= 10000).length;
+
+      document.getElementById('exStats').innerHTML = `
+    <div class="stat-card purple"><div class="label">筋トレ実施日</div><div class="value">${exDays.length}</div><div class="sub">日</div></div>
+    <div class="stat-card blue"><div class="label">平均歩数</div><div class="value">${allSteps.length ? Math.round(avg(allSteps)).toLocaleString() : '—'}</div><div class="sub">${stepDays.length}日分</div></div>
+    <div class="stat-card green"><div class="label">1万歩達成</div><div class="value">${tenK}</div><div class="sub">${stepDays.length ? Math.round(tenK / stepDays.length * 100) : 0}%</div></div>
+    <div class="stat-card amber"><div class="label">最高歩数</div><div class="value">${allSteps.length ? Math.max(...allSteps).toLocaleString() : '—'}</div><div class="sub">歩</div></div>`;
+
+      if (exDays.length) {
+        charts.ex = new Chart(document.getElementById('cExercise'), {
+          type: 'line', data: {
+            labels: exDays.map(x => x.date), datasets: [
+              { label: 'スクワット', data: exDays.map(x => x.exercise?.squat || 0), borderColor: '#8b5cf6', tension: .3, pointRadius: 1 },
+              { label: '腹筋', data: exDays.map(x => x.exercise?.abs || 0), borderColor: '#22c55e', tension: .3, pointRadius: 1 },
+              { label: '腕立て伏せ', data: exDays.map(x => x.exercise?.pushup || 0), borderColor: '#f59e0b', tension: .3, pointRadius: 1 }
+            ]
+          }, options: { ...chartOpts, scales: { x: tScale(), y: yAx({ suggestedMin: 0 }) } }
+        });
+      }
+
+      if (stepDays.length) {
+        charts.steps = new Chart(document.getElementById('cSteps'), { type: 'bar', data: { labels: stepDays.map(x => x.date), datasets: [{ label: '歩数', data: allSteps, backgroundColor: allSteps.map(s => s >= 10000 ? 'rgba(34,197,94,.5)' : 'rgba(79,143,255,.3)'), borderRadius: 3 }] }, options: { ...chartOpts, scales: { x: tScale(), y: yAx() } } });
+
+        const dn = ['日', '月', '火', '水', '木', '金', '土'], byD = Array.from({ length: 7 }, () => []);
+        stepDays.forEach(x => { byD[new Date(x.date).getDay()].push(x.steps) });
+        charts.sdow = new Chart(document.getElementById('cStepsDow'), { type: 'bar', data: { labels: dn, datasets: [{ label: '平均歩数', data: byD.map(a => a.length ? Math.round(avg(a)) : 0), backgroundColor: dn.map((_, i) => i === 0 || i === 6 ? 'rgba(239,68,68,.5)' : 'rgba(79,143,255,.5)'), borderRadius: 6 }] }, options: { ...chartOpts, scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' } }, y: yAx() } } });
+      }
+
+      // Monthly exercise rate
+      const byM = {}; DATA.forEach(x => { const m = x.date.slice(0, 7); if (!byM[m]) byM[m] = { total: 0, ex: 0 }; byM[m].total++; if (x.exercise) byM[m].ex++ });
+      const ms = Object.keys(byM).sort();
+      charts.exm = new Chart(document.getElementById('cExMonth'), { type: 'bar', data: { labels: ms, datasets: [{ label: '実施率%', data: ms.map(m => Math.round(byM[m].ex / byM[m].total * 100)), backgroundColor: 'rgba(139,92,246,.5)', borderRadius: 6 }] }, options: { ...chartOpts, scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' } }, y: yAx({ suggestedMax: 100 }) } } });
+    }
+
+    // ===== READING TAB =====
+    const READING = __READING_JSON__;
+    const GENRE_COLORS = { 'ミステリー': '#8b5cf6', '仏教・宗教': '#f59e0b', '自己啓発・学習': '#22c55e', '健康・科学': '#06b6d4', 'ホラー・怪奇': '#ef4444', '社会・ノンフィクション': '#3b82f6', 'その他小説': '#ec4899', 'その他': '#6b7280' };
+
+    function renderReading() {
+      const R = READING;
+      if (!R || !R.books) return;
+      const finished = R.books.filter(b => b.finished);
+      const genres = Object.entries(R.genre_finished || {}).sort((a, b) => b[1] - a[1]);
+      const topGenre = genres.length ? genres[0][0] : '—';
+      const paces = finished.filter(b => b.reading_days != null).map(b => b.reading_days);
+      const avgPace = paces.length ? paces.reduce((s, v) => s + v, 0) / paces.length : 0;
+
+      document.getElementById('readStats').innerHTML = `
+    <div class="stat-card blue"><div class="label">読了冊数</div><div class="value">${R.finished}</div><div class="sub">/ ${R.total}冊中</div></div>
+    <div class="stat-card purple"><div class="label">最多ジャンル</div><div class="value" style="font-size:1.2rem">${topGenre}</div><div class="sub">${genres.length ? genres[0][1] + '冊' : ''}</div></div>
+    <div class="stat-card green"><div class="label">平均ペース</div><div class="value">${avgPace.toFixed(1)}</div><div class="sub">日/冊</div></div>
+    <div class="stat-card amber"><div class="label">読書日数</div><div class="value">${DATA.filter(x => x.books && x.books.length).length}</div><div class="sub">日</div></div>`;
+
+      // Genre donut
+      if (genres.length) {
+        const labels = genres.map(g => g[0]), vals = genres.map(g => g[1]);
+        const colors = labels.map(l => GENRE_COLORS[l] || '#6b7280');
+        charts.genre = new Chart(document.getElementById('cGenre'), {
+          type: 'doughnut', data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 0 }] },
+          options: { ...chartOpts, cutout: '55%', plugins: { ...chartOpts.plugins, legend: { position: 'right', labels: { color: '#8888aa', font: { family: "'Inter','Noto Sans JP'", size: 11 }, padding: 12 } } } }
+        });
+      }
+
+      // Monthly genre stacked bar
+      const mg = R.monthly_genre || {};
+      const months = Object.keys(mg).sort();
+      if (months.length) {
+        const allGenres = [...new Set(months.flatMap(m => Object.keys(mg[m])))];
+        const datasets = allGenres.map(g => ({ label: g, data: months.map(m => (mg[m] || {})[g] || 0), backgroundColor: GENRE_COLORS[g] || '#6b7280', borderRadius: 3, stack: 's' }));
+        charts.mg = new Chart(document.getElementById('cMonthGenre'), {
+          type: 'bar', data: { labels: months, datasets },
+          options: { ...chartOpts, scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' }, stacked: true }, y: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' }, stacked: true } } }
+        });
+      }
+
+      // Reading pace chart
+      const paceBooks = finished.filter(b => b.reading_days != null).sort((a, b) => a.finished.localeCompare(b.finished));
+      if (paceBooks.length) {
+        const recentPB = paceBooks.slice(-25);
+        charts.pace = new Chart(document.getElementById('cPace'), {
+          type: 'bar', data: {
+            labels: recentPB.map(b => { const t = b.title.split(' - ')[0]; return t.length > 18 ? t.slice(0, 18) + '…' : t }),
+            datasets: [{ label: '日数', data: recentPB.map(b => b.reading_days), backgroundColor: recentPB.map(b => b.reading_days <= 2 ? 'rgba(34,197,94,.5)' : b.reading_days <= 4 ? 'rgba(79,143,255,.5)' : 'rgba(245,158,11,.5)'), borderRadius: 4 }]
+          },
+          options: { ...chartOpts, indexAxis: 'y', scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' } }, y: { ticks: { color: '#8888aa', font: { size: 10 } }, grid: { display: false } } }, plugins: { ...chartOpts.plugins, legend: { display: false } } }
+        });
+      }
+
+      // Book list with genre badges
+      const recent = R.books.filter(b => b.finished).sort((a, b) => b.finished.localeCompare(a.finished)).slice(0, 30);
+      const ongoing = R.books.filter(b => !b.finished).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 10);
+      let listHtml = recent.map(b => `<div class="book-item"><span>${b.title} <span style="display:inline-block;font-size:.65rem;padding:1px 5px;border-radius:3px;background:${GENRE_COLORS[b.genre] || '#6b7280'}22;color:${GENRE_COLORS[b.genre] || '#6b7280'}">${b.genre}</span></span><span><span class="book-badge">読了</span> <span style="color:var(--t3);font-size:.7rem">${b.finished}${b.reading_days != null ? ' (' + b.reading_days + '日)' : ''}</span></span></div>`).join('');
+      if (ongoing.length) {
+        listHtml += `<div style="margin:12px 0 6px;font-size:.8rem;color:var(--t2);font-weight:600">📖 読書中</div>`;
+        listHtml += ongoing.map(b => `<div class="book-item"><span>${b.title} <span style="display:inline-block;font-size:.65rem;padding:1px 5px;border-radius:3px;background:${GENRE_COLORS[b.genre] || '#6b7280'}22;color:${GENRE_COLORS[b.genre] || '#6b7280'}">${b.genre}</span></span><span style="color:var(--t3);font-size:.7rem">${b.days_seen}日読書中</span></div>`).join('');
+      }
+      document.getElementById('bookList').innerHTML = listHtml;
+    }
+
+    // ===== REPORT TAB =====
+    function renderReport() {
+      const el = document.getElementById('reportContent');
+      let html = '';
+
+      // Streak
+      const r = REPORT;
+      if (r.streaks && r.streaks.days_7h_plus > 0) {
+        html += `<div class="streak-card"><div class="streak-num">🔥 ${r.streaks.days_7h_plus}</div><div><div style="font-weight:600">7時間以上の連続日数</div><div class="streak-label">Keep it up!</div></div></div>`;
+      }
+
+      // Weekly
+      if (r.weekly && r.weekly.avg_hours) {
+        const w = r.weekly;
+        const diff = w.vs_last_week;
+        const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+        const cls = diff > 0 ? 'diff-up' : diff < 0 ? 'diff-down' : 'diff-flat';
+        html += `<div class="report-card"><h2>📊 今週の傾向</h2>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="label">平均睡眠</div><div class="value">${w.avg_hours}h</div></div>
+        <div class="stat-card green"><div class="label">平均スコア</div><div class="value">${w.avg_score || '—'}</div></div>
+        <div class="stat-card ${cls === 'diff-up' ? 'green' : cls === 'diff-down' ? 'red' : ''}"><div class="label">先週比</div><div class="value">${diff != null ? arrow + ' ' + Math.abs(diff).toFixed(1) + 'h' : '—'}</div></div>
+      </div>
+      ${w.best_day ? `<p style="font-size:.85rem;color:var(--t2);margin-top:8px">ベスト: ${w.best_day} / ワースト: ${w.worst_day}</p>` : ''}
+    </div>`;
+      }
+
+      // Monthly comparison
+      if (r.monthly_comparison && r.monthly_comparison.this_month) {
+        const m = r.monthly_comparison;
+        const hDiff = m.hours_diff; const hCls = hDiff > 0 ? 'diff-up' : hDiff < 0 ? 'diff-down' : 'diff-flat';
+        html += `<div class="report-card"><h2>📅 先月との比較</h2>
+      <table class="comp-table"><thead><tr><th>項目</th><th>${m.last_month}</th><th>${m.this_month}</th><th>差分</th></tr></thead><tbody>
+        <tr><td>平均睡眠</td><td>${m.last_avg_hours}h</td><td>${m.this_avg_hours}h</td><td class="${hCls}">${hDiff > 0 ? '+' : ''}${hDiff}h</td></tr>
+        ${m.this_avg_score ? `<tr><td>平均スコア</td><td>${m.last_avg_score}</td><td>${m.this_avg_score}</td><td class="${m.score_diff >= 0 ? 'diff-up' : 'diff-down'}">${m.score_diff > 0 ? '+' : ''}${m.score_diff}</td></tr>` : ''}
+        ${m.this_avg_deep ? `<tr><td>深い睡眠</td><td>${m.last_avg_deep}h</td><td>${m.this_avg_deep}h</td><td>—</td></tr>` : ''}
+      </tbody></table></div>`;
+      }
+
+      // Improvements
+      if (r.improvements && r.improvements.length) {
+        html += `<div class="report-card"><h2>💡 改善点・気づき</h2><ul>${r.improvements.map(i => `<li>${i.includes('✓') ? '✅' : '⚠️'} ${i}</li>`).join('')}</ul></div>`;
+      }
+
+      html += `<p style="text-align:center;color:var(--t3);font-size:.75rem;margin-top:16px">生成: ${r.generated || ''}</p>`;
+      el.innerHTML = html;
+    }
+
+    // ===== CORRELATION TAB =====
+    function renderCorrelation() {
+      const d = DATA.filter(x => x.hours && x.score);
+      if (!d.length) return;
+
+      // Insights
+      let insights = [];
+      const exDays = d.filter(x => x.exercise), noExDays = d.filter(x => !x.exercise);
+      if (exDays.length >= 5 && noExDays.length >= 5) {
+        // Check NEXT day sleep after exercise
+        const dateSet = new Set(DATA.filter(x => x.exercise).map(x => x.date));
+        const nextDayScores = [], noExNextScores = [];
+        d.forEach((x, i) => {
+          if (i === 0) return;
+          const prev = d[i - 1];
+          if (dateSet.has(prev.date)) nextDayScores.push(x.score);
+          else noExNextScores.push(x.score);
+        });
+        if (nextDayScores.length >= 3 && noExNextScores.length >= 3) {
+          const diff = avg(nextDayScores) - avg(noExNextScores);
+          if (Math.abs(diff) >= 1) {
+            insights.push({ tag: diff > 0 ? 'positive' : 'negative', msg: `筋トレ翌日の睡眠スコアは平均 ${avg(nextDayScores).toFixed(1)}（非筋トレ翌日: ${avg(noExNextScores).toFixed(1)}）→ ${diff > 0 ? '+' : ''}${diff.toFixed(1)}ポイント` });
+          }
+        }
+        const exAvgScore = avg(exDays.map(x => x.score)), noExAvgScore = avg(noExDays.map(x => x.score));
+        const sDiff = exAvgScore - noExAvgScore;
+        insights.push({ tag: sDiff >= 0 ? 'positive' : 'negative', msg: `筋トレ当日のスコア: ${exAvgScore.toFixed(1)} / 非筋トレ日: ${noExAvgScore.toFixed(1)}（${sDiff > 0 ? '+' : ''}${sDiff.toFixed(1)}）` });
+      }
+      const stepSleepDays = d.filter(x => x.steps && x.deep != null);
+      if (stepSleepDays.length >= 10) {
+        const highStep = stepSleepDays.filter(x => x.steps >= 10000), lowStep = stepSleepDays.filter(x => x.steps < 10000);
+        if (highStep.length >= 3 && lowStep.length >= 3) {
+          const hDeep = avg(highStep.map(x => x.deep)), lDeep = avg(lowStep.map(x => x.deep));
+          insights.push({ tag: hDeep > lDeep ? 'positive' : 'neutral', msg: `1万歩以上の日の深い睡眠: ${hDeep.toFixed(2)}h / 未満の日: ${lDeep.toFixed(2)}h` });
+        }
+      }
+      const bedScoreDays = d.filter(x => x.bedtime);
+      if (bedScoreDays.length >= 10) {
+        const early = bedScoreDays.filter(x => tDec(x.bedtime) <= 23), late = bedScoreDays.filter(x => tDec(x.bedtime) > 23);
+        if (early.length >= 3 && late.length >= 3) {
+          const eScore = avg(early.map(x => x.score)), lScore = avg(late.map(x => x.score));
+          insights.push({ tag: eScore > lScore ? 'positive' : 'negative', msg: `23時前就寝のスコア: ${eScore.toFixed(1)} / 23時以降: ${lScore.toFixed(1)}（${(eScore - lScore) > 0 ? '+' : ''}${(eScore - lScore).toFixed(1)}）` });
+        }
+      }
+      document.getElementById('corrInsights').innerHTML = insights.map(i => `<div class="insight"><span class="tag ${i.tag}">${i.tag === 'positive' ? '📈 Good' : '📉 注意'}</span><div class="msg">${i.msg}</div></div>`).join('');
+
+      // Chart: Exercise vs Sleep Score comparison
+      if (exDays.length && noExDays.length) {
+        charts.exvs = new Chart(document.getElementById('cExVsSleep'), {
+          type: 'bar', data: {
+            labels: ['筋トレ日', '非筋トレ日'], datasets: [
+              { label: '平均スコア', data: [avg(exDays.map(x => x.score)), avg(noExDays.map(x => x.score))], backgroundColor: ['rgba(139,92,246,.6)', 'rgba(85,85,119,.4)'], borderRadius: 8 },
+              { label: '平均睡眠h', data: [avg(exDays.map(x => x.hours)), avg(noExDays.map(x => x.hours))], backgroundColor: ['rgba(79,143,255,.6)', 'rgba(85,85,119,.3)'], borderRadius: 8 }
+            ]
+          }, options: { ...chartOpts, indexAxis: 'y', scales: { x: yAx(), y: { ticks: { color: '#8888aa' }, grid: { display: false } } } }
+        });
+      }
+
+      // Chart: Steps vs Deep Sleep scatter
+      if (stepSleepDays.length) {
+        charts.stpd = new Chart(document.getElementById('cStepsDeep'), { type: 'scatter', data: { datasets: [{ label: '歩数 vs 深い睡眠', data: stepSleepDays.map(x => ({ x: x.steps, y: x.deep })), backgroundColor: 'rgba(6,182,212,.5)', pointRadius: 4, pointHoverRadius: 7 }] }, options: { ...chartOpts, scales: { x: { title: { display: true, text: '歩数', color: '#555577' }, ticks: { color: '#555577', callback: v => (v / 1000).toFixed(0) + 'k' }, grid: { color: '#1f1f35' } }, y: { title: { display: true, text: '深い睡眠(h)', color: '#555577' }, ticks: { color: '#555577' }, grid: { color: '#1f1f35' } } } } });
+      }
+
+      // Chart: Bedtime vs Score scatter
+      if (bedScoreDays.length) {
+        charts.beds = new Chart(document.getElementById('cBedScore'), { type: 'scatter', data: { datasets: [{ label: '就寝 vs スコア', data: bedScoreDays.map(x => ({ x: tDec(x.bedtime), y: x.score })), backgroundColor: bedScoreDays.map(x => x.score >= 90 ? 'rgba(34,197,94,.6)' : 'rgba(245,158,11,.6)'), pointRadius: 4, pointHoverRadius: 7 }] }, options: { ...chartOpts, scales: { x: { title: { display: true, text: '就寝時刻', color: '#555577' }, ticks: { color: '#555577', callback: v => decT(v) }, grid: { color: '#1f1f35' } }, y: { title: { display: true, text: 'スコア', color: '#555577' }, ticks: { color: '#555577' }, grid: { color: '#1f1f35' }, suggestedMin: 70, suggestedMax: 100 } } } });
+      }
+
+      // Chart: Day of week pattern (multi-metric)
+      const dn = ['日', '月', '火', '水', '木', '金', '土'], byDH = Array.from({ length: 7 }, () => []), byDS = Array.from({ length: 7 }, () => []), byDSt = Array.from({ length: 7 }, () => []);
+      d.forEach(x => { const dow = new Date(x.date).getDay(); byDH[dow].push(x.hours); byDS[dow].push(x.score); if (x.steps) byDSt[dow].push(x.steps) });
+      charts.dowp = new Chart(document.getElementById('cDowPattern'), {
+        type: 'bar', data: {
+          labels: dn, datasets: [
+            { label: '睡眠h', data: byDH.map(a => a.length ? avg(a) : 0), backgroundColor: 'rgba(79,143,255,.5)', borderRadius: 4, yAxisID: 'y' },
+            { label: 'スコア', data: byDS.map(a => a.length ? avg(a) : 0), type: 'line', borderColor: '#22c55e', borderWidth: 2, pointRadius: 3, tension: .3, yAxisID: 'y1' }
+          ]
+        }, options: { ...chartOpts, scales: { x: { ticks: { color: '#555577' }, grid: { color: '#1f1f35' } }, y: yAx({ suggestedMin: 5, suggestedMax: 9, position: 'left' }), y1: { ticks: { color: '#22c55e' }, grid: { display: false }, position: 'right', suggestedMin: 80, suggestedMax: 100 } } }
+      });
+    }
+
+
+
+    // ===== TIMELINE TAB =====
+    function renderTimeline() {
+      const R = READING || {};
+      const books = (R.books || []).filter(b => b.finished).sort((a, b) => a.finished.localeCompare(b.finished));
+      if (!books.length) return;
+
+      const GENRE_COLORS = {
+        'ミステリー': '#ef4444', '仏教・宗教': '#f59e0b', '自己啓発・学習': '#22c55e',
+        '社会・ノンフィクション': '#3b82f6', '健康・科学': '#06b6d4', 'ホラー・怪奇': '#a855f7',
+        'その他小説': '#ec4899', 'その他': '#6b7280'
+      };
+
+      const genres = [...new Set(books.map(b => b.genre))];
+      let activeGenre = null;
+
+      // Genre filter
+      const filterEl = document.getElementById('tlFilter');
+      filterEl.innerHTML = `<button class="active" onclick="filterTL(null,this)">すべて</button>` +
+        genres.map(g => `<button onclick="filterTL('${g}',this)" style="border-color:${GENRE_COLORS[g] || '#6b7280'}30">${g}</button>`).join('');
+
+      const container = document.getElementById('tlContainer');
+
+      // Detail popup
+      let detailEl = document.createElement('div');
+      detailEl.className = 'tl-detail';
+      document.body.appendChild(detailEl);
+
+      window.filterTL = function (genre, btn) {
+        activeGenre = genre;
+        filterEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        drawTL();
+      };
+
+      function drawTL() {
+        const filtered = activeGenre ? books.filter(b => b.genre === activeGenre) : books;
+        if (!filtered.length) { container.innerHTML = '<p style="color:var(--t3);text-align:center">該当する本がありません</p>'; return; }
+
+        const firstDate = new Date(filtered[0].finished);
+        const lastDate = new Date(filtered[filtered.length - 1].finished);
+        const totalDays = Math.max(1, (lastDate - firstDate) / 86400000);
+        const width = Math.max(800, totalDays * 3);
+
+        // Month markers
+        let monthHtml = '';
+        const startMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+        const d = new Date(startMonth);
+        while (d <= lastDate) {
+          const x = Math.max(0, (d - firstDate) / 86400000 / totalDays * width);
+          monthHtml += `<div class="tl-month" style="position:absolute;left:${x}px">${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}</div>`;
+          d.setMonth(d.getMonth() + 1);
+        }
+
+        // Books as dots
+        // Alternate above/below the axis
+        let bookHtml = `<div class="tl-axis"></div>`;
+        const genreYOffset = {};
+        let offsetCounter = 0;
+        genres.forEach(g => { genreYOffset[g] = (offsetCounter % 2 === 0 ? -1 : 1) * (20 + Math.floor(offsetCounter / 2) * 18); offsetCounter++; });
+
+        filtered.forEach((b, i) => {
+          const bDate = new Date(b.finished);
+          const x = (bDate - firstDate) / 86400000 / totalDays * width;
+          const yOff = (i % 2 === 0 ? -1 : 1) * (15 + (i % 6) * 8);
+          const color = GENRE_COLORS[b.genre] || '#6b7280';
+          const title = b.title.split(' - ')[0];
+          const author = b.title.split(' - ').slice(1).join(' - ') || '';
+          bookHtml += `<div class="tl-book" style="left:${x}px;top:calc(50% + ${yOff}px);background:${color}" 
+            data-title="${title.replace(/"/g, '&quot;')}" data-author="${author.replace(/"/g, '&quot;')}" 
+            data-genre="${b.genre}" data-date="${b.finished}" data-days="${b.reading_days || ''}"
+            data-color="${color}"
+            onmouseenter="showTLDetail(event,this)" onmouseleave="hideTLDetail()"></div>`;
+        });
+
+        container.innerHTML = `<div style="position:relative;height:20px;width:${width}px">${monthHtml}</div>` +
+          `<div style="position:relative;height:220px;width:${width}px">${bookHtml}</div>`;
+      }
+
+      window.showTLDetail = function (e, el) {
+        const d = el.dataset;
+        detailEl.innerHTML = `
+          <div class="tl-detail-title">${d.title}</div>
+          ${d.author ? `<div class="tl-detail-author">${d.author}</div>` : ''}
+          <div class="tl-detail-meta">📅 ${d.date}${d.days ? ' (' + d.days + '日)' : ''}</div>
+          <div class="tl-detail-genre" style="background:${d.color}22;color:${d.color}">${d.genre}</div>
+        `;
+        detailEl.classList.add('show');
+        detailEl.style.left = Math.min(e.clientX + 10, window.innerWidth - 320) + 'px';
+        detailEl.style.top = (e.clientY - 80) + 'px';
+      };
+      window.hideTLDetail = function () { detailEl.classList.remove('show') };
+
+      drawTL();
+    }
+
+    // ===== INIT =====
+    initPeriods(); renderSleep(); renderExercise(); renderReading(); renderTimeline(); renderCorrelation(); renderReport();
+    document.getElementById('genDate').textContent = new Date().toLocaleDateString('ja-JP');
+
+    // PWA
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => { }); }
+  </script>
+</body>
+
+</html>
