@@ -312,7 +312,7 @@
             align-items: center;
             justify-content: center;
             gap: 16px;
-            margin-top: 16px;
+            margin-bottom: 12px;
         }
 
         .day-nav button {
@@ -659,6 +659,11 @@
             <div class="home-date" id="homeDate"></div>
             <div class="home-label">睡眠記録</div>
         </div>
+        <div class="day-nav">
+            <button onclick="navDay(-1)">◀</button>
+            <button class="today-btn" onclick="navToday()">今日</button>
+            <button onclick="navDay(1)">▶</button>
+        </div>
         <div class="score-ring" id="scoreRing">
             <svg viewBox="0 0 120 120">
                 <circle class="bg" cx="60" cy="60" r="52" />
@@ -684,11 +689,6 @@
         <div class="mood-card" id="moodCard" style="display:none">
             <div class="title">💭 気分メモ</div>
             <div class="body" id="moodBody"></div>
-        </div>
-        <div class="day-nav">
-            <button onclick="navDay(-1)">◀</button>
-            <button class="today-btn" onclick="navToday()">今日</button>
-            <button onclick="navDay(1)">▶</button>
         </div>
         <div class="no-data" id="noData" style="display:none">この日のデータはありません</div>
     </div>
@@ -859,10 +859,24 @@
 
         function navDay(delta) {
             const dt = new Date(currentDate + 'T00:00:00');
-            dt.setDate(dt.getDate() + delta);
-            renderHome(dt.toISOString().slice(0, 10));
+            // Try up to 60 days to find a day with data
+            for (let i = 0; i < 60; i++) {
+                dt.setDate(dt.getDate() + (i === 0 ? delta : (delta > 0 ? 1 : -1)));
+                const ds = dt.toISOString().slice(0, 10);
+                if (byDate[ds]) {
+                    renderHome(ds);
+                    return;
+                }
+            }
+            // If no data found within range, just go one day
+            const fallback = new Date(currentDate + 'T00:00:00');
+            fallback.setDate(fallback.getDate() + delta);
+            renderHome(fallback.toISOString().slice(0, 10));
         }
-        function navToday() { renderHome(today); }
+
+        function navToday() {
+            renderHome(today);
+        }
 
         // ===== CALENDAR =====
         function initCal() {
