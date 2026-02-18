@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🌙 睡眠記録</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f0a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0f0a2e;
+            --bg2: #1a1245;
+            --bg3: #251c5a;
+            --card: #1e1650;
+            --card2: #2a2065;
+            --text: #e8e4f5;
+            --text2: #a89fd4;
+            --text3: #6e65a0;
+            --accent: #7c5cff;
+            --accent2: #a78bfa;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --orange: #fb923c;
+            --deep: #6366f1;
+            --light: #818cf8;
+            --rem: #a78bfa;
+            --awake: #f97316;
+            --ring-size: 160px;
+        }
+
+        html,
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* === NAV === */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: linear-gradient(180deg, transparent, var(--bg) 20%);
+            padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 420px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: 20px;
+            padding: 6px 12px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, .4);
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: var(--text3);
+            font-size: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: .2s;
+            border-radius: 12px;
+            font-family: inherit;
+        }
+
+        .nav-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8
+        }
+
+        .nav-btn.active {
+            color: var(--accent2);
+            background: rgba(124, 92, 255, .12)
+        }
+
+        .nav-btn:active {
+            transform: scale(.92)
+        }
+
+        /* === PAGES === */
+        .page {
+            display: none;
+            padding: 16px 16px 100px;
+            max-width: 480px;
+            margin: 0 auto;
+            animation: fadeIn .3s
+        }
+
+        .page.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        /* === HOME === */
+        .home-header {
+            text-align: center;
+            padding: 12px 0 8px
+        }
+
+        .home-date {
+            font-size: 13px;
+            color: var(--text2);
+            font-weight: 500
+        }
+
+        .home-label {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .score-ring {
+            position: relative;
+            width: var(--ring-size);
+            height: var(--ring-size);
+            margin: 20px auto;
+        }
+
+        .score-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg)
+        }
+
+        .score-ring .bg {
+            stroke: var(--bg3);
+            stroke-width: 8;
+            fill: none
+        }
+
+        .score-ring .fg {
+            stroke-width: 8;
+            fill: none;
+            stroke-linecap: round;
+            transition: stroke-dashoffset .8s ease
+        }
+
+        .score-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .score-num {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -2px
+        }
+
+        .score-unit {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: -4px
+        }
+
+        .sleep-hours {
+            text-align: center;
+            margin: 8px 0 16px
+        }
+
+        .sleep-hours .h {
+            font-size: 28px;
+            font-weight: 600
+        }
+
+        .sleep-hours .sub {
+            font-size: 12px;
+            color: var(--text2)
+        }
+
+        .stage-bars {
+            display: flex;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 8px 8px;
+            background: var(--bg3);
+        }
+
+        .stage-bars div {
+            height: 100%;
+            transition: width .6s ease
+        }
+
+        .stage-legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stage-legend span {
+            font-size: 10px;
+            color: var(--text2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stage-legend span::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .stage-legend .st-deep::before {
+            background: var(--deep)
+        }
+
+        .stage-legend .st-light::before {
+            background: var(--light)
+        }
+
+        .stage-legend .st-rem::before {
+            background: var(--rem)
+        }
+
+        .stage-legend .st-awake::before {
+            background: var(--awake)
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .detail-item {
+            text-align: center
+        }
+
+        .detail-item .val {
+            font-size: 16px;
+            font-weight: 600
+        }
+
+        .detail-item .lbl {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .mood-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .mood-card .title {
+            font-size: 11px;
+            color: var(--text3);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .mood-card .body {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text2);
+            white-space: pre-wrap
+        }
+
+        .day-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .day-nav button {
+            background: var(--card);
+            border: none;
+            color: var(--text2);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .day-nav button:active {
+            background: var(--accent);
+            color: #fff;
+            transform: scale(.9)
+        }
+
+        .day-nav .today-btn {
+            font-size: 11px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            width: auto;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--text3);
+            padding: 40px 0;
+            font-size: 14px
+        }
+
+        /* === CALENDAR === */
+        .cal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 16px;
+        }
+
+        .cal-header h2 {
+            font-size: 18px;
+            font-weight: 600
+        }
+
+        .cal-header button {
+            background: var(--card);
+            border: none;
+            color: var(--text);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cal-header button:active {
+            background: var(--accent)
+        }
+
+        .cal-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .cal-stat {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .cal-stat .v {
+            font-size: 18px;
+            font-weight: 700
+        }
+
+        .cal-stat .l {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center
+        }
+
+        .cal-dow {
+            font-size: 10px;
+            color: var(--text3);
+            padding: 4px 0;
+            font-weight: 600
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: .15s;
+            font-size: 13px;
+            position: relative;
+        }
+
+        .cal-day:hover {
+            background: var(--bg3)
+        }
+
+        .cal-day.today {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px
+        }
+
+        .cal-day.selected {
+            background: var(--accent) !important;
+            color: #fff
+        }
+
+        .cal-day .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+        }
+
+        .cal-day.empty {
+            pointer-events: none
+        }
+
+        /* Detail popup */
+        .cal-detail {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 12px;
+            border: 1px solid rgba(124, 92, 255, .2);
+            animation: fadeIn .2s;
+        }
+
+        .cal-detail h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px
+        }
+
+        .cal-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .cal-detail-item {
+            background: var(--bg3);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .cal-detail-item .v {
+            font-size: 16px;
+            font-weight: 600
+        }
+
+        .cal-detail-item .l {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .cal-detail .mood {
+            background: var(--bg3);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text2);
+            white-space: pre-wrap;
+        }
+
+        /* === MONTHLY === */
+        .month-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, .04);
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .month-card:active {
+            transform: scale(.98)
+        }
+
+        .month-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px
+        }
+
+        .month-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px
+        }
+
+        .month-stat {
+            text-align: center
+        }
+
+        .month-stat .v {
+            font-size: 20px;
+            font-weight: 700
+        }
+
+        .month-stat .l {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .month-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .month-bar-track {
+            flex: 1;
+            height: 6px;
+            background: var(--bg3);
+            border-radius: 3px;
+            overflow: hidden
+        }
+
+        .month-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .6s
+        }
+
+        .month-bar-label {
+            font-size: 10px;
+            color: var(--text3);
+            min-width: 50px
+        }
+
+        .month-detail-days {
+            margin-top: 12px;
+            display: none
+        }
+
+        .month-card.expanded .month-detail-days {
+            display: block
+        }
+
+        .mini-day {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            border-top: 1px solid rgba(255, 255, 255, .04);
+            font-size: 12px;
+            gap: 8px;
+        }
+
+        .mini-day .d {
+            width: 48px;
+            color: var(--text3);
+            font-weight: 500
+        }
+
+        .mini-day .bar {
+            flex: 1;
+            height: 4px;
+            background: var(--bg3);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .mini-day .bar-fill {
+            height: 100%;
+            border-radius: 2px
+        }
+
+        .mini-day .hrs {
+            width: 40px;
+            text-align: right;
+            font-weight: 500
+        }
+
+        .mini-day .sc {
+            width: 28px;
+            text-align: right;
+            color: var(--text2);
+            font-size: 11px
+        }
+
+        /* PC Layout */
+        @media(min-width:768px) {
+            .page {
+                max-width: 560px;
+                padding: 24px 24px 100px
+            }
+
+            .score-ring {
+                --ring-size: 180px
+            }
+
+            .nav-inner {
+                max-width: 480px
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HOME -->
+    <div id="pageHome" class="page active">
+        <div class="home-header">
+            <div class="home-date" id="homeDate"></div>
+            <div class="home-label">睡眠記録</div>
+        </div>
+        <div class="score-ring" id="scoreRing">
+            <svg viewBox="0 0 120 120">
+                <circle class="bg" cx="60" cy="60" r="52" />
+                <circle class="fg" id="scoreFg" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="score-center">
+                <div class="score-num" id="scoreNum">—</div>
+                <div class="score-unit">スコア</div>
+            </div>
+        </div>
+        <div class="sleep-hours">
+            <div class="h" id="sleepHours">—</div>
+            <div class="sub" id="sleepSub"></div>
+        </div>
+        <div class="stage-bars" id="stageBars"></div>
+        <div class="stage-legend">
+            <span class="st-deep">深い</span>
+            <span class="st-light">ライト</span>
+            <span class="st-rem">レム</span>
+            <span class="st-awake">覚醒</span>
+        </div>
+        <div class="detail-row" id="detailRow"></div>
+        <div class="mood-card" id="moodCard" style="display:none">
+            <div class="title">💭 気分メモ</div>
+            <div class="body" id="moodBody"></div>
+        </div>
+        <div class="day-nav">
+            <button onclick="navDay(-1)">◀</button>
+            <button class="today-btn" onclick="navToday()">今日</button>
+            <button onclick="navDay(1)">▶</button>
+        </div>
+        <div class="no-data" id="noData" style="display:none">この日のデータはありません</div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="pageCal" class="page">
+        <div class="cal-header">
+            <button onclick="calNav(-1)">◀</button>
+            <h2 id="calTitle"></h2>
+            <button onclick="calNav(1)">▶</button>
+        </div>
+        <div class="cal-stats" id="calStats"></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div id="calDetail"></div>
+    </div>
+
+    <!-- MONTHLY -->
+    <div id="pageMonth" class="page">
+        <h2 style="font-size:18px;font-weight:600;padding:8px 0 16px">📊 月別サマリー</h2>
+        <div id="monthList"></div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <button class="nav-btn active" data-page="pageHome">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                今日
+            </button>
+            <button class="nav-btn" data-page="pageCal">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                カレンダー
+            </button>
+            <button class="nav-btn" data-page="pageMonth">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                </svg>
+                月別
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const DATA = [{"date": "2025-05-17", "hours": 7.0, "weather": "雨☔", "mood": "きっちり7時間寝たので気分がいい", "books": [{"title": "伽藍堂の殺人 - 周木律", "finished": true}]}, {"date": "2025-05-18", "hours": 6.0, "weather": "🌥曇り", "mood": "実際に目が覚めたのは5:38くらい。\n  6時間ちょいしか眠れなかったので眠い", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}, {"title": "教会堂の殺人 - 周木律", "finished": false}]}, {"date": "2025-05-19", "hours": 7.0, "weather": "曇り☁️", "mood": "う〜ん🤔昨晩10:40頃に就寝し、4時に目が醒めてアーセナルVSニューカッスルを見て、[[教会堂の殺人 - 周木律]]を読了してまた寝て、9時のアラームで起きた。実際木は何時間寝たのか分からん(7時間くらいかな)。今日こそもっと早く、9時台に寝よう。", "books": [{"title": "教会堂の殺人 - 周木律", "finished": true}, {"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}, {"title": "不可触民と現代インド - 山際素男", "finished": false}, {"title": "鏡面堂の殺人 ～Ｔｈｅｏｒｙ ｏｆ Ｒｅｌａｔｉｖｉｔｙ～ - 周木律", "finished": false}, {"title": "面倒なことはChatGPTにやらせよう - カレーちゃん からあげ", "finished": false}]}, {"date": "2025-05-20", "hours": 5.0, "weather": "晴れ", "mood": "起きたのは5:20だけど4時に目が覚めてしまった。そこからXでgensparkに関するニュースをダラダラと読む。ああ、もっと寝たい。", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}, {"title": "不可触民と現代インド - 山際素男", "finished": false}]}, {"date": "2025-05-21", "hours": 4.5, "weather": "曇りのち晴れ", "mood": "最悪。何だ今日の睡眠時間は！マジでいい加減にしないと体が持たんぞ。今日こそさっさと寝よう。", "books": [{"title": "列島創世記 - 松木武彦", "finished": false}, {"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}, {"title": "不可触民と現代インド - 山際素男", "finished": false}]}, {"date": "2025-05-22", "hours": 7.5, "mood": "久々に7時間以上寝られた気がする。おかげでいい気分。明日は早いので、今夜は早く寝る！", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}, {"title": "鏡面堂の殺人 ～Ｔｈｅｏｒｙ ｏｆ Ｒｅｌａｔｉｖｉｔｙ～ - 周木律", "finished": false}]}, {"date": "2025-05-24", "hours": 7.3, "weather": "☁️曇り", "mood": "うん、7時間以上眠れたので気分は良い"}, {"date": "2025-05-25", "hours": 5.0, "mood": "最悪。"}, {"date": "2025-05-26", "hours": 8.17, "weather": "曇り", "mood": "良いね。", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}]}, {"date": "2025-05-27", "hours": 6.9, "bedtime": "23:18", "waketime": "06:22", "weather": "曇り", "mood": "う〜ん、滅茶苦茶眠いぞ。頭がボーッとする。", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}]}, {"date": "2025-05-28", "hours": 6.0, "weather": "晴れ☀️久々に晴れている", "mood": "悪いね、もっと寝たいよ", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}]}, {"date": "2025-05-29", "hours": 6.5, "mood": "- 天気::\n###### 📚 今日読んだ本\n- [[日本の歴史1 神話から歴史へ - 井上光貞]]\n- 石人、石馬\n- 横穴式石室と追葬\n- 蘇我氏の台頭と大伴氏の没落\n- 応神王朝と屯倉、そもそも屯倉とは？　\n- 継体ー欽明朝と、文化の向上\n- 継体ー欽明朝と、「帝紀」「旧辞」\n- カマド塚の存在と、火葬文化の伝来\n- 「公伝」における火葬の始まり\n　　文武天皇の四年（700年）に、道昭がなくなった時におこなったのがはじめ\n\n- 磐井の乱と日本の古代史の転換期\n- 任那とは結局なんだったのか？\n  本当に日本が支配していたのか\n\n[[日本の歴史2 古代国家の成立 - 直木孝次郎]]\n- 飛鳥時代の区分\n- 最初に飛鳥に都を置いた允恭天皇\n- 物部氏の職掌は軍事・警察だが、宗教とも関係が深い\n- タラシ（帯・足）＝天皇\n  ヒコ（彦）＝男\n  オオタラシ＝天皇？\n  ワカタラシ＝皇太子？\n- 壬申の乱を経て天皇の地位が上昇した天武朝や、飛鳥浄御原令を施行して公地公民制が実現した持統朝が、やはりこの憲法（十七条憲法）の背景として最も似つかわしいと思われる。\n- 国造が支配する国と、天皇の所領である県の関係は、はっきりとは分かっていない\n- 607年の遣隋使と煬帝の怒り\n  しかし翌年に日本に使者\n  高句麗を討つため？\n- \n---\n\n###### ✅ 今日のタスク\nnot done\ndue before today\n  - [ ]\n  - [ ]\n  - [ ]\n###### 📝 メモ\n- ChatGPTに語句を投げて、論述してもらう→クイズ化してもらう→Geminiに精査&クイズアプリを作ってもらう\n  最高の学習法では！？", "books": [{"title": "日本の歴史1 神話から歴史へ - 井上光貞", "finished": false}]}, {"date": "2025-05-30", "hours": 5.0, "weather": "雨", "mood": "最悪だぜ、なぜこんなに眠れないのか", "books": [{"title": "日本の歴史2 古代国家の成立 - 直木孝次郎", "finished": false}]}, {"date": "2025-05-31", "hours": 7.42, "weather": "☔雨", "mood": "一度5:38に目が覚めたが、そこからまたウトウトして起床したのが上記時間。相変わらず早朝に目覚めてしまうが、そこからまたウトウトできたのは良かったかな。", "books": [{"title": "日本の歴史2 古代国家の成立 - 直木孝次郎", "finished": false}, {"title": "教養としての仏教入門 - 中村圭志", "finished": false}]}, {"date": "2025-06-01", "hours": 6.67, "bedtime": "23:37", "waketime": "6:25", "weather": "曇り", "mood": "目覚めはよくない。また夜更かししてしまったという後悔。眠い…。", "books": [{"title": "教養としての仏教入門 - 中村圭志", "finished": false}, {"title": "日本の歴史2 古代国家の成立 - 直木孝次郎", "finished": false}]}, {"date": "2025-06-02", "hours": 5.25, "bedtime": "00:59", "waketime": "6:23", "weather": "曇ったり晴れたり", "mood": "最悪だよ。冷静に、なぜここ最近眠るのが遅くなっているのか考えると、もしかしたら眠るのが怖いのかも…。早く寝ても、どうせ中途覚醒してしまうのだろう、と無意識に考えているのかもしれない。", "books": [{"title": "物価を考える デフレの謎、インフレの謎 - 渡辺努", "finished": true}]}, {"date": "2025-06-04", "hours": 5.9, "bedtime": "00:09", "waketime": "06:01", "weather": "朝は晴れていたが", "mood": "よくない。眠い。", "books": [{"title": "初めてのマルクス、エンゲルス - 山田敬男", "finished": false}, {"title": "睡眠の起源 - 金谷啓之", "finished": true}, {"title": "最新版 論文の教室 レポートから卒論まで - 戸田山和久", "finished": false}]}, {"date": "2025-06-05", "hours": 7.25, "bedtime": "23:06", "waketime": "08:15", "weather": "晴れ☀", "mood": "夜中1時過ぎに蚊に襲われて目覚め、蚊取り線香を焚く。3時過ぎまで寝床で本を読む。また寝たのだが、4時過ぎに今度は蚊に食われ、また蚊取り線香。ふざけんな！どこから入ってくるんだ！", "books": [{"title": "最新版 論文の教室 レポートから卒論まで - 戸田山和久", "finished": true}, {"title": "火葬と土葬 - 岩田重則", "finished": true}]}, {"date": "2025-06-06", "hours": 9.0, "bedtime": "23:06", "waketime": "08:54", "weather": "晴れ☀️", "mood": "よく寝た！久々にこんなに寝た！途中何度か目覚めながらだったが、まだこんなに眠る力が残っていたんだな。", "books": [{"title": "農耕社会の成立 - 石川日出志", "finished": true}, {"title": "「日本」とは何か - 網野善彦", "finished": false}]}, {"date": "2025-06-07", "hours": 5.83, "bedtime": "23:55", "waketime": "06:01", "mood": "眠い。クソ。また夜更かししてしまった！", "books": [{"title": "赤虫村の怪談 - 大島清昭", "finished": false}]}, {"date": "2025-06-08", "hours": 7.67, "bedtime": "22:36", "waketime": "06:24", "weather": "曇り☁️", "mood": "まあまあ。変な夢を見た。おそらく学校が火事になり、焼けただれた部屋の中で生徒？や教師？たちとケーキを食うという夢。俺はモンブランを食っていた。", "books": [{"title": "赤虫村の怪談 - 大島清昭", "finished": false}]}, {"date": "2025-06-11", "hours": 7.67, "bedtime": "23:10", "waketime": "6:59", "weather": "☔雨", "mood": "まあまあ"}, {"date": "2025-06-12", "hours": 8.17, "bedtime": "22:37", "waketime": "06:54", "mood": "よく寝た！うむ、気分が良い！"}, {"date": "2025-06-13", "hours": 7.75, "bedtime": "22:46", "waketime": "06:36", "weather": "曇り☁️", "mood": "う〜ん、悪くはないが…。夜中に暑くて目が覚めて、クーラーを付けたり、今度は逆に足下が寒くて目が覚めたり、途中何度も目が覚めてしまったなあ。まあそれは仕方ないとして…。昨晩のAIチャットとのやりとりは完全に無駄だったな😂さっさと寝ろッ！って話だよな。", "books": [{"title": "迷路館の殺人〈新装改訂版〉 - 綾辻行人", "finished": true}, {"title": "私たちの戦争社会学入門 - 野上元", "finished": false}]}, {"date": "2025-06-14", "hours": 7.0, "bedtime": "22:53", "waketime": "06:50", "mood": "4時過ぎに目が覚めて、そこから暫く眠れず悶々としてかなりつらかったが、なんとか眠れたらしく最終的に目覚めたのが6:44。睡眠アプリ上は7時間50分寝たことになっているが、体感として7時間としておく。", "books": [{"title": "私たちの戦争社会学入門 - 野上元", "finished": false}]}, {"date": "2025-06-15", "hours": 4.92, "bedtime": "00:32", "waketime": "05:46", "mood": "最悪。昨日、Geminiでのクイズアプリ開発に夢中になって夜更かししてしまった…！"}, {"date": "2025-06-16", "hours": 6.5, "bedtime": "00:23", "waketime": "06:59", "weather": "晴れ☀️暑いぞ", "mood": "う〜ん、夜更かしした割には……まあ…6時間以上は寝られたし…。", "books": [{"title": "ｉｎｖｅｒｔ 城塚翡翠倒叙集 - 相沢沙呼", "finished": true}, {"title": "新アジア仏教史01 インド I 仏教出現の背景 - 奈良康明 下田正弘", "finished": false}]}, {"date": "2025-06-17", "hours": 7.0, "bedtime": "23:08", "waketime": "06:26", "weather": "晴れ☀️暑い", "mood": "まあまあ"}, {"date": "2025-06-21", "hours": 7.5, "bedtime": "22:34", "waketime": "06:36", "mood": "- 天気::\n###### 📚 今日読んだ本\n- \n\n\n###### 👨‍🎓今日の学び\n- \n\n\n###### ✅ 今日やること\n  - [ ]\n  - [ ]\n  - [ ]\n###### 📝 今日あったこと\n-"}, {"date": "2025-06-22", "hours": 7.5, "bedtime": "22:08", "waketime": "05:47", "mood": "しっかり寝たが、まだまだ眠い。"}, {"date": "2025-06-26", "hours": 5.0, "bedtime": "00:08", "waketime": "06:08", "weather": "雨☔", "mood": "うう……また夜更かししてしまった🤬今日こそ9時台に寝るぞ！！", "books": [{"title": "宗教を学べば経営がわかる - 池上彰 入山章栄", "finished": false}, {"title": "世界史のリテラシー 仏教は、いかにして多様化したか 部派仏教の成立 - 佐々木閑", "finished": false}]}, {"date": "2025-07-04", "hours": 7.67, "bedtime": "22:31", "waketime": "06:28", "mood": "- 天気::\n###### 📚 今日読んだ本\n- [[きみはメタルギアソリッドⅤ：ファントムペインをプレイする - ジャミル・ジャン・コチャイ 矢倉喬士]]　読了\n\n\n###### 👨‍🎓今日の学び\n- \n\n\n###### ✅ 今日やること\n  - [ ]\n  - [ ]\n  - [ ]\n\n###### 🍚食事\n- 朝、炊いた米と胡瓜の塩昆布もみ\n- 昼、お袋に買ってきてもらった(お婆ちゃんの奢り)豚の角煮弁当。美味かった。\n- 夜、ブロッコリーの炒め蒸し、炊いた米の残り、プチトマトと卵の炒め物。\n\n###### 📝 今日あったこと\n-", "books": [{"title": "きみはメタルギアソリッドⅤ：ファントムペインをプレイする - ジャミル・ジャン・コチャイ 矢倉喬士", "finished": true}]}, {"date": "2025-07-05", "hours": 8.17, "bedtime": "21:43", "waketime": "06:15", "mood": "- 天気::\n###### 📚 今日読んだ本\n- [[デフ・ヴォイス 法廷の手話通訳士 - 丸山正樹]]　読了\n- [[Jミステリー2024 - 誉田哲也 五十嵐律人]]　読了\n- \n\n\n  \n  ###### 🍚 食事\n- 朝、海苔巻き(叔父さん製)\n  家でカレーとトースト、蜂蜜\n- 昼、15時頃に赤いきつね\n- 夜、シウマイ弁当、プチトマトと卵の炒め物、ブロッコリーの炒め蒸し、胡瓜の塩昆布もみ、インスタント味噌汁\n\n\n\n###### 📝 今日あったこと\n-", "books": [{"title": "デフ・ヴォイス 法廷の手話通訳士 - 丸山正樹", "finished": true}, {"title": "Jミステリー2024 - 誉田哲也 五十嵐律人", "finished": true}]}, {"date": "2025-07-06", "hours": 4.75, "bedtime": "00:23", "waketime": "05:23", "mood": "また夜更かししてしまった…。[[方舟 - 夕木春央]]を夢中で読んで、気づけば深夜だった…。", "books": [{"title": "だから見るなといったのに - 恩田陸 芦沢央 海猫沢めろん 織守きょうや さやか 小林泰三 澤村伊智 前川知大 北村薫", "finished": true}, {"title": "方舟 - 夕木春央", "finished": true}, {"title": "仏教は科学なのか私が仏教徒ではない理由 - エヴァン・トンプソン", "finished": false}]}, {"date": "2025-07-15", "hours": 8.25, "bedtime": "21:24", "waketime": "05:47", "mood": "よく寝た！気分がいい！"}, {"date": "2025-07-19", "hours": 5.08, "bedtime": "23:48", "waketime": "05:33", "weather": "晴れ", "mood": "キツい……。睡眠時間が…。一日中眠い。", "books": [{"title": "人形館の殺人〈新装改訂版〉 - 綾辻行人", "finished": false}]}, {"date": "2025-07-20", "hours": 7.83, "bedtime": "21:39", "waketime": "05:37", "weather": "晴れ", "mood": "やっぱ8時間近く眠ると気分がいいし、体力的にも充実している感じがある。睡眠を疎かにしては駄目だと実感。", "books": [{"title": "人形館の殺人〈新装改訂版〉 - 綾辻行人", "finished": true}, {"title": "歩くという哲学", "finished": false}]}, {"date": "2025-07-21", "hours": 7.75, "bedtime": "23:40", "waketime": "07:31", "weather": "晴れ", "mood": "少し夜更かしして起きるのが遅くなってしまったが、8時間近く寝られたことは良かった。", "books": [{"title": "歩くという哲学", "finished": true}, {"title": "十戒 - 夕木春央", "finished": false}]}, {"date": "2025-07-22", "hours": 6.83, "bedtime": "23:00", "waketime": "06:00", "weather": "晴れ", "mood": "『十戒』を読んでいて寝るのが遅くなった。う〜ん…7時間近く寝られたことは良かったが、これでは足りない。今夜早く寝よう。", "books": [{"title": "十戒 - 夕木春央", "finished": true}]}, {"date": "2025-07-23", "hours": 5.83, "bedtime": "23:29", "waketime": "05:30", "weather": "晴れ☀️", "mood": "畜生！眠い！目は覚めたが起きる気にならず布団でダラダラ過ごす、最悪。今夜こそ早く眠ろう……！！", "books": [{"title": "扉は閉ざされたまま - 石持浅海", "finished": false}, {"title": "世界史のリテラシー ローマ教皇は、なぜ特別な存在なのか カノッサの屈辱 - 藤崎衛", "finished": true}]}, {"date": "2025-07-24", "hours": 6.83, "bedtime": "23:10", "waketime": "06:12", "weather": "晴れ", "mood": "連日23時過ぎまで起きてしまっている。よくない兆候だ。朝起きて運動するんだろ？だったら早寝しろって！！", "books": [{"title": "扉は閉ざされたまま - 石持浅海", "finished": true}, {"title": "星くずの殺人 - 桃野雑派", "finished": false}]}, {"date": "2025-07-25", "hours": 7.0, "bedtime": "22:34", "waketime": "05:39", "weather": "晴れ", "mood": "意外といい気分。そんなに眠くもない。", "books": [{"title": "星くずの殺人 - 桃野雑派", "finished": true}, {"title": "最悪の相棒 - 伏尾美紀", "finished": false}]}, {"date": "2025-07-27", "hours": 6.75, "bedtime": "22:38", "waketime": "05:56", "weather": "晴れ", "mood": "う～ん、眠い…。", "books": [{"title": "最悪の相棒 - 伏尾美紀", "finished": false}]}, {"date": "2025-07-28", "hours": 7.0, "bedtime": "01:01", "waketime": "08:58", "weather": "晴れ🌞熱い", "mood": "最悪…また夜更かししてしまった…。そろそろいい加減にしないと…。", "books": [{"title": "最悪の相棒 - 伏尾美紀", "finished": true}, {"title": "不機嫌は罪である - 齋藤 孝", "finished": true}, {"title": "「ひとり」の哲学 - 山折哲雄", "finished": true}, {"title": "時計館の殺人〈新装改訂版〉（上） - 綾辻行人", "finished": false}]}, {"date": "2025-07-29", "hours": 8.5, "bedtime": "23:01", "waketime": "08:22", "weather": "晴れ🌞熱い", "mood": "まあ、トータルで結構寝られたので、気分は悪くない。", "books": [{"title": "時計館の殺人〈新装改訂版〉（上） - 綾辻行人", "finished": false}, {"title": "認知症世界の歩き方 - 筧裕介 認知症未来共創ハブほか", "finished": false}]}, {"date": "2025-07-30", "hours": 6.92, "bedtime": "21:45", "waketime": "05:51", "mood": "3時過ぎに目が覚め、スマホをいじったり本を読んだり。", "books": [{"title": "時計館の殺人〈新装改訂版〉（上） - 綾辻行人", "finished": true}, {"title": "時計館の殺人〈新装改訂版〉（下） - 綾辻行人", "finished": true}]}, {"date": "2025-07-31", "hours": 7.25, "bedtime": "22:04", "waketime": "06:11", "weather": "晴れ", "mood": "3時半頃に目覚め、そこから30分ほどスマホをいじる……。この中途覚醒、どうすれば治るんだ……！！", "books": [{"title": "認知症世界の歩き方 - 筧裕介 認知症未来共創ハブほか", "finished": true}, {"title": "Jミステリー2022 - 光文社文庫編集部", "finished": false}]}, {"date": "2025-08-01", "hours": 5.5, "bedtime": "23:00", "waketime": "06:00", "weather": "久々に", "mood": "よくない。眠れない。つらい。", "books": [{"title": "ウォーキングの科学 １０歳若返る、本当に効果的な歩き方 - 能勢博", "finished": false}]}, {"date": "2025-08-02", "hours": 7.0, "bedtime": "22:32", "waketime": "06:08", "weather": "晴れ", "mood": "まあ、中途覚醒がなかったので良しとしよう。", "books": [{"title": "Jミステリー2022 - 光文社文庫編集部", "finished": true}, {"title": "ウォーキングの科学 １０歳若返る、本当に効果的な歩き方 - 能勢博", "finished": true}, {"title": "異次元緩和の罪と罰 - 山本謙三", "finished": false}, {"title": "体験の哲学 地上最強の人生に役立つ哲学活用法 - 飲茶", "finished": false}]}, {"date": "2025-08-03", "hours": 7.17, "bedtime": "22:11", "waketime": "05:28", "weather": "曇りのち晴れ", "mood": "まあまあ、やはり7時間以上寝ると気分いい。", "books": [{"title": "体験の哲学 地上最強の人生に役立つ哲学活用法 - 飲茶", "finished": true}, {"title": "みえないもの - イリナグリゴレ", "finished": false}, {"title": "Jミステリー2023 - 宮内悠介 東川篤哉 太田愛 長岡弘樹 似鳥鶏 逸木裕", "finished": false}]}, {"date": "2025-08-04", "hours": 6.67, "bedtime": "22:55", "waketime": "05:48", "weather": "晴れ🌞暑い", "mood": "眠い、もっと寝たい。", "books": [{"title": "Jミステリー2023 - 宮内悠介 東川篤哉 太田愛 長岡弘樹 似鳥鶏 逸木裕", "finished": true}, {"title": "みえないもの - イリナグリゴレ", "finished": true}, {"title": "復讐の泥沼 - くわがきあゆ", "finished": false}]}, {"date": "2025-08-05", "hours": 6.33, "bedtime": "00:00", "waketime": "06:25", "weather": "晴れ🌞暑い", "mood": "ふざけるな、ちゃんと寝ろ！", "books": [{"title": "復讐の泥沼 - くわがきあゆ", "finished": true}, {"title": "妖し - 恩田陸 米澤穂信 村山由佳 窪美澄 彩瀬まる 阿部智里 朱川湊人 武川佑 乾ルカ 小池真理子", "finished": false}, {"title": "世界史のリテラシー 「ロシア」は、いかにして生まれたか タタールのくびき - 宮野裕", "finished": false}]}, {"date": "2025-08-06", "hours": 6.42, "bedtime": "00:41", "waketime": "07:57", "weather": "晴れ🌞やばい", "mood": "ふざけんなバカ！寝ろ！", "books": [{"title": "妖し - 恩田陸 米澤穂信 村山由佳 窪美澄 彩瀬まる 阿部智里 朱川湊人 武川佑 乾ルカ 小池真理子", "finished": true}]}, {"date": "2025-08-07", "hours": 8.0, "bedtime": "22:04", "waketime": "06:30", "weather": "曇り", "mood": "久しぶりによく寝た！やはり気力体力ともに充実感あり。", "books": [{"title": "悪意 - 東野圭吾", "finished": true}]}, {"date": "2025-08-08", "hours": 6.83, "bedtime": "22:48", "waketime": "05:50", "weather": "晴れのち曇り時々雨", "mood": "う～ん、もう少し寝たい、最低でも7時間は…。", "books": [{"title": "仮面山荘殺人事件 - 東野圭吾", "finished": true}]}, {"date": "2025-08-09", "hours": 8.08, "bedtime": "21:50", "waketime": "06:02", "weather": "晴れ", "mood": "途中暑さと寝苦しさで何度も目が覚め、ウトウトし、ということを繰り返したように思う。だから実際は8時間も寝てないんじゃないかな。でもまあ良しとする。", "books": [{"title": "日本史を宗教で読みなおす - 大西信行 佐藤雄基", "finished": false}, {"title": "出版禁止（新潮文庫） - 長江俊和", "finished": false}]}, {"date": "2025-08-10", "hours": 7.67, "weather": "曇り", "mood": "冷房を消して寝たので暑さで寝苦しく何度か目が覚めたと思うが、それでもそのたびにまた眠り、変な夢も見た。結構長時間寝られたのでよかった。", "books": [{"title": "出版禁止（新潮文庫） - 長江俊和", "finished": true}]}, {"date": "2025-08-11", "hours": 8.33, "bedtime": "22:05", "waketime": "06:35", "weather": "曇り", "mood": "よく寝た！！最高！エアコンをドライ（25度）にしてつけっぱなしにしていたのが良かったのかも？？", "books": [{"title": "日本史を宗教で読みなおす - 大西信行 佐藤雄基", "finished": false}]}, {"date": "2025-08-12", "hours": 6.83, "bedtime": "22:40", "waketime": "06:53", "mood": "う〜ん、失敗した。もっと早く寝ておくべきだった。", "books": [{"title": "黒猫館の殺人〈新装改訂版〉 - 綾辻行人", "finished": true}]}, {"date": "2025-08-16", "hours": 8.25, "bedtime": "22:06", "waketime": "06:36", "weather": "曇り時々雨", "mood": "よく寝た！！気分はとてもよいが、右の肩甲骨あたりが痛い。", "books": [{"title": "珍名ばかりが狙われる連続殺人鬼ヤマダの息子 - 黒川慈雨", "finished": false}]}, {"date": "2025-08-17", "hours": 6.92, "bedtime": "22:32", "waketime": "05:35", "weather": "晴れ", "mood": "う〜ん、もっと寝たかったね。やっぱり22時台じゃ遅いんだよね。遅くとも22時までには眠りたいところ。", "books": [{"title": "珍名ばかりが狙われる連続殺人鬼ヤマダの息子 - 黒川慈雨", "finished": true}, {"title": "出版禁止 死刑囚の歌（新潮文庫） - 長江俊和", "finished": false}, {"title": "浄土思想 - 岩田文昭", "finished": false}]}, {"date": "2025-08-21", "hours": 6.25, "bedtime": "22:58", "waketime": "05:45", "mood": "眠いぜ！！", "books": [{"title": "暗黒館の殺人（一） - 綾辻行人", "finished": false}]}, {"date": "2025-08-22", "hours": 5.92, "bedtime": "00:59", "waketime": "06:59", "weather": "晴れ🌞", "mood": "クソおおおおおお！！夜更かししてしまった！！今夜は必ず早く眠るぞ！！！", "books": [{"title": "暗黒館の殺人（一） - 綾辻行人", "finished": true}, {"title": "暗黒館の殺人（二） - 綾辻行人", "finished": true}, {"title": "浄土思想 - 岩田文昭", "finished": true}, {"title": "私、合ってますよね - 玉井仁", "finished": false}]}, {"date": "2025-08-23", "hours": 7.25, "bedtime": "23:29", "waketime": "06:59", "weather": "晴れ", "mood": "また眠るのが遅くなってしまった。こんなこそ早く寝る。", "books": [{"title": "私、合ってますよね - 玉井仁", "finished": true}]}, {"date": "2025-08-24", "hours": 7.08, "bedtime": "22:53", "waketime": "06:17", "weather": "晴れ", "mood": "昨日も寝るのが遅くなってしまったが、7時間寝られたことは良かった。", "books": [{"title": "暗黒館の殺人（三） - 綾辻行人", "finished": false}]}, {"date": "2025-08-25", "hours": 7.25, "bedtime": "22:46", "waketime": "06:13", "mood": "クソ！また7時間しか眠れなかった！！今夜こそ早く寝るぞ…！！", "books": [{"title": "暗黒館の殺人（三） - 綾辻行人", "finished": false}]}, {"date": "2025-08-26", "hours": 8.25, "bedtime": "22:28", "waketime": "26:56", "weather": "晴れ", "mood": "朝はよく寝たと思って気分がよかったのだが…日中、めちゃくちゃ眠かった。おそらく睡眠の質が悪かったのだろう…。", "books": [{"title": "暗黒館の殺人（三） - 綾辻行人", "finished": false}]}, {"date": "2025-08-27", "hours": 7.42, "bedtime": "23:04", "waketime": "06:42", "weather": "晴れ🌞暑い", "mood": "今日は法事が午後からなので朝は部屋でダラダラできた。まあまあです。", "books": [{"title": "暗黒館の殺人（三） - 綾辻行人", "finished": true}, {"title": "暗黒館の殺人（四） - 綾辻行人", "finished": true}]}, {"date": "2025-09-07", "hours": 6.33, "bedtime": "22:12", "waketime": "05:22", "mood": "頭が痛い…気分がいいわけがない。", "books": [{"title": "奇面館の殺人（下） - 綾辻行人", "finished": true}]}, {"date": "2025-09-20", "hours": 7.58, "bedtime": "22:47", "waketime": "07:29", "weather": "曇り時々雨", "mood": "キツいよ。", "books": [{"title": "マスカレード・ナイト - 東野圭吾", "finished": true}, {"title": "すべてはノートからはじまるあなたの人生をひらく記録術 - 倉下忠憲", "finished": false}, {"title": "あっという間に人は死ぬから 「時間を食べつくすモンスター」の正体と倒し方 - 佐藤舞(サトマイ)", "finished": true}]}, {"date": "2025-09-21", "hours": 6.08, "bedtime": "23:54", "waketime": "06:04", "weather": "曇り", "mood": "中途覚醒が出なかったのでまあ、悪くはないが…良くもないかな…やはり6時間では眠いよ。", "books": [{"title": "誘拐遊戯 - 知念実希人", "finished": true}, {"title": "掲載禁止（新潮文庫） - 長江俊和", "finished": false}]}, {"date": "2025-09-23", "hours": 6.67, "bedtime": "22:29", "waketime": "05:18", "weather": "曇り", "mood": "中途覚醒がなかったので悪くはない。でもやはり、7時間以上は寝たい！！", "books": [{"title": "君が何度死んでも - 椙本孝思 ふすい", "finished": true}, {"title": "Jミステリー2024 - 光文社文庫編集部", "finished": false}, {"title": "すべてはノートからはじまるあなたの人生をひらく記録術 - 倉下忠憲", "finished": true}]}, {"date": "2025-09-24", "hours": 5.0, "bedtime": "00:19", "waketime": "05:21", "weather": "晴れ", "mood": "いいわけねーだろ！！", "books": [{"title": "Jミステリー2024 - 光文社文庫編集部", "finished": true}, {"title": "殺人鬼 ——覚醒篇 - 綾辻 行人", "finished": true}]}, {"date": "2025-09-25", "hours": 7.0, "bedtime": "22:04", "waketime": "05:13", "weather": "晴れ", "mood": "早朝覚醒は出たが、目立った中途覚醒はなかった。そこはよかった。", "books": [{"title": "探偵ＡＩのリアル・ディープラーニング（新潮文庫nex） - 早坂吝", "finished": true}, {"title": "殺人鬼 逆襲篇 - 綾辻行人", "finished": false}, {"title": "唯識のすすめ - 岡野守也", "finished": false}]}, {"date": "2025-09-26", "hours": 8.0, "bedtime": "22:43", "waketime": "06:50", "weather": "晴れ", "mood": "トータルとして結構眠れたっぽいので、気分は良い。", "books": [{"title": "殺人鬼 逆襲篇 - 綾辻行人", "finished": true}, {"title": "密室殺人ゲーム王手飛車取り - 歌野晶午", "finished": false}]}, {"date": "2025-09-27", "hours": 5.83, "bedtime": "22:59", "waketime": "04:51", "weather": "曇り", "mood": "良くない！！！！", "books": [{"title": "密室殺人ゲーム王手飛車取り - 歌野晶午", "finished": false}]}, {"date": "2025-09-28", "hours": 6.17, "bedtime": "22:56", "waketime": "05:34", "weather": "曇り時々晴れ", "mood": "良いわけがない。", "books": [{"title": "密室殺人ゲーム王手飛車取り - 歌野晶午", "finished": true}]}, {"date": "2025-09-30", "hours": 5.17, "bedtime": "23:02", "waketime": "04:18", "weather": "曇り", "mood": "やはり眠いが、そこまでではない。動ける。", "books": [{"title": "十字屋敷のピエロ新装版 - 東野圭吾", "finished": false}]}, {"date": "2025-10-01", "hours": 6.25, "bedtime": "23:38", "waketime": "06:08", "weather": "雨", "mood": "睡眠のせいでよくはないが、リバポがガラタサライに負けていてハッピー。", "books": [{"title": "十字屋敷のピエロ新装版 - 東野圭吾", "finished": false}]}, {"date": "2025-10-03", "hours": 5.67, "bedtime": "00:01", "waketime": "05:49", "weather": "曇り", "mood": "いいわけない。", "books": [{"title": "危険なビーナス - 東野圭吾", "finished": true}, {"title": "スピノザの診察室 - 夏川草介", "finished": false}]}, {"date": "2025-10-04", "hours": 7.0, "bedtime": "22:17", "waketime": "05:19", "weather": "曇りのち雨", "mood": "まあまあ。", "books": [{"title": "スピノザの診察室 - 夏川草介", "finished": true}]}, {"date": "2025-10-05", "hours": 3.4, "bedtime": "03:50", "waketime": "07:36", "weather": "曇りのち晴れ", "mood": "眠気は本当にきついが、不思議と開き直って落ち着いている。", "books": [{"title": "勉強脳 - 樺沢紫苑", "finished": false}, {"title": "人生にコンセプトを - 澤田智洋", "finished": false}, {"title": "世界の終わり、あるいは始まり - 歌野 晶午", "finished": false}]}, {"date": "2025-10-06", "hours": 8.4, "weather": "曇り", "mood": "結構眠れたのでよし！", "books": [{"title": "世界の終わり、あるいは始まり - 歌野 晶午", "finished": true}]}, {"date": "2025-10-07", "hours": 5.5, "bedtime": "00:00", "waketime": "05:30", "weather": "曇り", "mood": "ああ、眠い。", "books": [{"title": "人生にコンセプトを - 澤田智洋", "finished": true}, {"title": "勉強脳 - 樺沢紫苑", "finished": true}, {"title": "密室殺人ゲーム２．０ - 歌野晶午", "finished": false}]}, {"date": "2025-10-09", "hours": 8.25, "light": 4.33, "rem": 1.17, "bedtime": "21:51", "waketime": "06:19", "weather": "曇り", "mood": "やはりしっかり眠ると気分がよい。", "books": [{"title": "密室殺人ゲーム２．０ - 歌野晶午", "finished": true}, {"title": "はじめる力 - 安野貴博", "finished": false}, {"title": "密室殺人ゲーム・マニアックス - 歌野晶午", "finished": false}]}, {"date": "2025-10-10", "hours": 6.67, "light": 3.75, "rem": 0.42, "bedtime": "23:31", "waketime": "06:16", "weather": "曇り時々晴れ", "mood": "６時間代後半に達することは出来たので気分は悪くない。", "books": [{"title": "密室殺人ゲーム・マニアックス - 歌野晶午", "finished": true}]}, {"date": "2025-10-12", "score": 84, "light": 3.92, "rem": 0.58, "bedtime": "23:44", "waketime": "06:57", "weather": "曇り☁", "mood": "7時間は眠りたいところだが、まあよしとする。", "books": [{"title": "スケルトン・キー - 道尾秀介", "finished": true}, {"title": "読書を自分の武器にする技術 - 尾藤克之", "finished": true}, {"title": "眠りの牢獄 - 浦賀和宏", "finished": true}, {"title": "法然の手紙を読む - 阿満利麿", "finished": false}]}, {"date": "2025-10-14", "hours": 6.33, "bedtime": "22:25", "waketime": "04:57", "weather": "曇り☁️", "mood": "もっと眠りたい。", "books": [{"title": "考古学の大発見をめぐる八つの冒険 - マイケル・スコット", "finished": false}, {"title": "Another (上) - 綾辻行人", "finished": true}]}, {"date": "2025-10-18", "hours": 6.92, "light": 0.0, "rem": 0.0, "awake": 0.0, "bedtime": "23:31", "waketime": "06:55", "weather": "曇りのち晴れ☀️", "mood": "まあまあです、トータルではそこそこ眠れたので。", "books": [{"title": "身から出た闇 - 原浩", "finished": false}]}, {"date": "2025-10-23", "hours": 9.17, "bedtime": "22:10", "waketime": "07:40", "weather": "晴れ🌞なかなか清々しい気候", "mood": "よく眠れて気分もよい！", "steps": 10642, "books": [{"title": "Jミステリー2023 SPRING - 光文社文庫編集部", "finished": false}]}, {"date": "2025-10-24", "hours": 6.92, "bedtime": "23:44", "waketime": "06:40", "weather": "曇り☁️ときどき雨🌧️", "mood": "そこそこ通しで眠れたのはよかった。エゼが「もうサッカーに飽きた」と発言しておいおい！と思う、という不可思議な夢を見た…。", "steps": 9137, "books": [{"title": "Jミステリー2023 SPRING - 光文社文庫編集部", "finished": false}]}, {"date": "2025-10-25", "hours": 7.17, "bedtime": "23:13", "waketime": "06:30", "weather": "雨時々曇り☔", "mood": "最近は異様に早い時間帯の中途覚醒もなく(あったとしてもまた眠れる)嬉しい。\n  今夜はもっと早めに床に入ってぐっすり眠りたい。", "steps": 10868, "books": [{"title": "自己決定の落とし穴 - 石田光規", "finished": true}]}, {"date": "2025-10-26", "hours": 4.5, "bedtime": "01:25", "waketime": "06:19", "weather": "雨☔最近", "mood": "サッカー観戦で夜更かし✕早朝覚醒のダブルパンチでキツい。\n  実質起床したのは５時４５分。\n  今夜こそ早く寝て体を回復させるぞ！", "steps": 11044, "books": [{"title": "Jミステリー2023 SPRING - 光文社文庫編集部", "finished": false}]}, {"date": "2025-10-28", "hours": 5.25, "bedtime": "01:20", "waketime": "07:00", "weather": "晴れのち曇り", "mood": "また夜更かししてしまった…。\n  癖になっている…。\n  ChatGPTよ、この馬鹿な人間を笑え！！！\n  今夜こそ、今夜こそ早く寝たい！！！", "steps": 7124, "books": [{"title": "Jミステリー2023 SPRING - 光文社文庫編集部", "finished": true}]}, {"date": "2025-10-29", "hours": 7.83, "bedtime": "23:14", "waketime": "07:21", "weather": "晴れ", "mood": "中途覚醒もなく、よく寝られたぞ！！\n  今夜はもっと早く床に入ることを目標とする。", "steps": 12212, "books": [{"title": "なぜ社会は変わるのか はじめての社会運動論 - 富永京子", "finished": false}]}, {"date": "2025-10-30", "hours": 6.75, "bedtime": "23:42", "waketime": "06:37", "weather": "晴れ", "mood": "そこそこ眠れたとは思うが、やはり7時間以上が望ましい。\n  今夜は２２時までに就寝することを目標とする。", "steps": 10590, "books": [{"title": "Ａｎｏｔｈｅｒ （下）", "finished": false}]}, {"date": "2025-10-31", "hours": 7.5, "bedtime": "22:48", "waketime": "06:25", "weather": "晴れのち雨", "mood": "２２時までに眠るという目標は達成できず😧\n  しかし中途覚醒もなくよく眠れた方ではある。\n今夜は２２時までに眠る！", "steps": 11867, "books": [{"title": "歩く マジで人生が変わる習慣 - 池田光史", "finished": false}, {"title": "Ａｎｏｔｈｅｒ （下）", "finished": false}]}, {"date": "2025-11-01", "hours": 7.08, "score": 96, "bedtime": "23:26", "waketime": "06:40", "weather": "晴れ☀️", "mood": "またも目標達成できず…。\n  そこそこ眠れはしたが、今夜こそ早めに寝て7時間台後半〜8時間台の睡眠で体を回復させたい。", "steps": 7799, "books": [{"title": "Ａｎｏｔｈｅｒ （下）", "finished": true}]}, {"date": "2025-11-02", "hours": 6.33, "bedtime": "23:00", "waketime": "04:16", "weather": "晴れのち曇り", "mood": "う〜ん、アーセナルが勝ったのは嬉しいが、この早朝覚醒はキツイ。やはりアーセナルの試合がある日は緊張と興奮で眠りが浅くなってしまうのか？一度目覚めたら、試合を確認しなければ気が済まないから結局そこで起きざるを得ない。", "steps": 6258, "books": [{"title": "輪廻の思想 - 梶山雄一", "finished": false}, {"title": "透明人間は密室に潜む - 阿津川辰海", "finished": false}]}, {"date": "2025-11-03", "hours": 8.38, "weather": "晴れ", "mood": "すまん、昨日は睡眠モニターアプリを起動させずに寝てしまった。\n  最後に時計を見た時に21:48だったのでそこを就寝時間とさせてくれ。\n  起床したのは06:11。\n  ぐっすりと長めに眠って心身ともに回復した感がある。目覚めもスッキリだった。気分もとても良いね、久々にこんなに質の良い睡眠を取った気がする。", "steps": 9861, "books": [{"title": "輪廻の思想 - 梶山雄一", "finished": true}]}, {"date": "2025-11-04", "hours": 6.5, "weather": "晴れ☀️", "mood": "腹痛で早朝覚醒。\n  起きてトイレへ駆け込んで、腹を下した。\n  睡眠時間も足りないし、最悪の目覚めだ。", "steps": 10427, "books": [{"title": "透明人間は密室に潜む - 阿津川辰海", "finished": false}, {"title": "兇人邸の殺人 - 今村昌弘", "finished": false}]}, {"date": "2025-11-05", "hours": 5.0, "weather": "晴れ時々曇り", "mood": "アプリがうまく記録を取ってくれなかったが、とりあえず3:50までは眠った。\n  片頭痛によって中途覚醒、頭痛薬を飲んで痛みは少し引いたがその後眠れず。\n  今めちゃくちゃ眠たいが、仕事に行かないと…。最悪だ。", "steps": 10187, "exercise": {"squat": 10, "abs": 10, "pushup": 10}, "books": [{"title": "兇人邸の殺人 - 今村昌弘", "finished": false}]}, {"date": "2025-11-06", "hours": 7.17, "bedtime": "22:57", "waketime": "06:12", "weather": "曇り", "mood": "三日ぶりにまともに眠れた。\n  やはりしっかり寝ると、体力の回復具合が違うような気がする。\n  今夜は２１時台の就寝を目指す。", "steps": 10616, "exercise": {"squat": 10, "abs": 10, "pushup": 10}, "books": [{"title": "兇人邸の殺人 - 今村昌弘", "finished": false}]}, {"date": "2025-11-07", "hours": 6.5, "weather": "晴れ☀️いい天気", "mood": "すまん、計測し忘れた。  \n  最後に時計を見たのが0時40分、そこで眠ったのだろう。起きたのが7時11分。  \n  賃貸物件について色々調べていて夜更かしした。  \n  今夜こそ２１時台に眠るぞ。", "steps": 9892, "exercise": {"squat": 10, "abs": 10, "pushup": 10}, "books": [{"title": "兇人邸の殺人 - 今村昌弘", "finished": true}, {"title": "山のメディスン 弱さをゆるし、生きる力をつむぐ - 稲葉俊郎", "finished": false}, {"title": "●●にいたる病 - 我孫子武丸 神永学 背筋 真梨幸子 矢樹純 歌野晶午", "finished": false}]}, {"date": "2025-11-08", "hours": 7.17, "weather": "曇りのち晴れ", "mood": "昨夜は読書で夜更かし…。\n  睡眠量としてはそこそこ確保できたので悪くはないのだが、やはり生活リズムを整えるためにも、今夜こそ２１時台の就寝を目指す。\n  そのためにすることは①夕食は早めに、最低でも１８時までに済ますこと。\n  ②読みたい本は午前中、もしくは日中までに読んでおくこと。", "steps": 9913, "exercise": {"squat": 10, "abs": 10, "pushup": 10}}, {"date": "2025-11-09", "hours": 5.67, "weather": "雨のち曇り", "mood": "俺はいつになったら２１時台に眠れるんだ！？！？昨夜食べた大勝軒のつけ麺は多すぎた。朝から腹を下す…。", "steps": 7430, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "どうせそろそろ死ぬんだし - 香坂鮪", "finished": false}]}, {"date": "2025-11-10", "hours": 5.5, "weather": "晴れときどき雨", "mood": "自滅の刃・無限賃貸物件検索篇のせいで夜中まで延々スマホで賃貸を探していた…。 いい加減、体がきついって。 今夜こそ、今夜こそ早く眠るぞ…！", "exercise": {"squat": 10, "abs": 10, "pushup": 10}, "books": [{"title": "どうせそろそろ死ぬんだし - 香坂鮪", "finished": true}]}, {"date": "2025-11-11", "hours": 6.92, "weather": "晴れ", "mood": "昨日は寝る準備は早めに終わったのだが、読書地獄にハマってしまい(しかも大して面白くもない本)、結局夜更かし。\n  俺には早めの就寝は無理なのかもしれない…。", "steps": 10359, "exercise": {"squat": 0, "abs": 0, "pushup": 0}}, {"date": "2025-11-13", "hours": 8.58, "weather": "曇り", "mood": "二日続けてめっちゃ寝た。\n  嬉しいね〜、自分にもまだ眠る力が残っていたんだなと思うと…。\n  あとは就寝時刻を早めにするだけだな。", "steps": 12724, "exercise": {"squat": 10, "abs": 10, "pushup": 10}, "books": [{"title": "彼女は存在しない - 浦賀和宏", "finished": true}]}, {"date": "2025-11-14", "hours": 4.33, "weather": "晴れ", "mood": "色々な不安や悩み、ストレスがあって眠るのが怖くて夜更かししてしまった。\n  で、更に不安から来る早朝覚醒で睡眠時間も短くなってしまった。\n  ああ…キツい。まあこういう日もあるわなぁ…。", "steps": 15696, "exercise": {"squat": 10, "abs": 10, "pushup": 10}, "books": [{"title": "経営中毒 - 徳谷智史", "finished": true}]}, {"date": "2025-11-15", "hours": 7.58, "weather": "曇りのち晴れ", "mood": "そこそこ眠れたぜ、良かった😮‍💨\n  気分としても悪くない。\n  ２３時前に眠りに就けたことも評価したい。\n  今夜は、更に就寝を前倒ししたいところだ。", "steps": 10761, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "強いビジネスパーソンを目指して鬱になった僕の弱さ考 - 井上慎平", "finished": false}]}, {"date": "2025-11-16", "hours": 6.75, "mood": "ああ、いろんな不安が重なってまた眠るのが少し遅くなった…。\n  やっぱ七時間を切ると体力的に少しきついな。", "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "強いビジネスパーソンを目指して鬱になった僕の弱さ考 - 井上慎平", "finished": true}]}, {"date": "2025-11-17", "hours": 5.55, "weather": "晴れ☀️暖かくていい天気", "mood": "モニター上は５:１９まで寝たことになってるが、実際は４:０５に目覚めて以降、一度も眠れなかった。 ４:０５に起きたとして計測してくれ。 キツい…今日は朝早くから仕事だ。", "steps": 13602, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "集中力がすべてを解決する - 樺沢紫苑", "finished": true}]}, {"date": "2025-11-18", "hours": 6.5, "bedtime": "00:14", "waketime": "05:12", "mood": "ふ〜〜😮‍💨\n  昨日は仕事で帰りが遅くなり、その反動で夜更かししてしまった。所謂リベンジ夜更かしってやつかな。\n  で、更に早朝覚醒で目覚めてしまったが、その後、再び眠りには就けた。\n  でもやはり７時間以上は寝ないと心身ともに回復が薄いな…。", "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "シンデレラ城の殺人 - 紺野天龍", "finished": false}]}, {"date": "2025-11-19", "hours": 7.08, "weather": "曇りのち晴れ☀️", "mood": "ああ、眠い…もっと寝たい…8時間でも９時間でもぐっすり眠りたい。\n  心身の疲労に睡眠での回復が追いついていない感じがする。\n  もう目覚めた瞬間から疲れているもんな。", "steps": 12633, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "シンデレラ城の殺人 - 紺野天龍", "finished": true}, {"title": "Jミステリー2025 - 三上延 誉田哲也 長岡弘樹 紺野天龍 織守きょうや 青柳碧人", "finished": false}]}, {"date": "2025-11-20", "hours": 7.18, "bedtime": "23:02", "waketime": "07:03", "mood": "計測には反映されていないが、実際には６時１３分に目覚めた。しかし起きられず、布団の中でまどろんでいた。気付いたら7時を過ぎていたのでウトウトしていたのだと思う。体感としては、そこそこ回復した感はあるかな。\n  しかし朝は寒いな……寒さのせいで目覚めるの、嫌だなあ。\n  布団をもう一枚かけたほうがいいかも。", "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "Jミステリー2025 - 三上延 誉田哲也 長岡弘樹 紺野天龍 織守きょうや 青柳碧人", "finished": true}]}, {"date": "2025-11-21", "hours": 6.92, "weather": "晴れ☀️いい天気", "mood": "早朝に出勤しなければならず早起き。\n  目覚めた直後は非常に眠かったが、体を動かしているうちに眠気も吹っ飛んだ。", "steps": 14488, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "不夜脳 脳がほしがる本当の休息 - 東島威史", "finished": false}]}, {"date": "2025-11-22", "hours": 6.3, "weather": "晴れて良い天気☀️", "mood": "駄目だ、また早朝覚醒。\n  目覚めた瞬間から心臓が大きく波打って(心拍数自体は正常なのだが…)、不安感がもろに体に表れている。\n  めちゃくちゃ眠いのでそのまま横になっていたが結局は眠れず。\n  仕方なく起きる。", "steps": 9022, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "不夜脳 脳がほしがる本当の休息 - 東島威史", "finished": true}]}, {"date": "2025-11-23", "hours": 6.67, "weather": "薄曇り", "mood": "モニターには反映されていないが、早朝に一度目覚めたけれども、またウトウトすることができた。\n  起床時の感覚としては正直かなりキツイというか心身ともに疲れているが、しかし６時間以上眠れているわけだからまだマシと考えるべきなのかな。\n  今夜はもっと眠りたいな。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}}, {"date": "2025-11-25", "hours": 8.33, "bedtime": "23:43", "waketime": "06:30", "weather": "曇りのち小雨", "mood": "仕事でビジホ(赤羽ホリックホテル)に泊まった。\n  睡眠モニターを使う前にも22:10頃から一度寝てしまった。\n  で、一度目覚めてからモニターアプリを起動させてまた周囲の就寝。\n  ホテルのベッドって、硬く感じてあまり眠れないことが多いのだが(モニターに計測されていないが、何度か夜中に目覚めつつも)今日はよく眠れた。\n  ただ、起床時から左の側頭部に片頭痛あり、バファリンを飲もう。", "steps": 6400, "exercise": {"squat": 50, "abs": 50, "pushup": 50}}, {"date": "2025-11-26", "hours": 7.58, "rem": 0.0, "weather": "晴れてよい天気", "mood": "ホテルでの2泊目。\n  ５時半頃に目が冷めたがまだまだ寝たかったので起床せず。\n  周囲の物音などでちょいちょい目を覚ましつつ、気付いたら８時になっていた。\n  モニター上には計測されていないが、何度も目が覚めたのであまり良く眠れた感じはしない。\n  けど知らぬ間に時間が過ぎていたってことは覚醒の合間に眠ってもいたのだろう。\n  う〜ん、なんとも言えないというか、あまり満足感はない睡眠だったかな…。", "steps": 12281, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "不夜脳 脳がほしがる本当の休息 - 東島威史", "finished": false}]}, {"date": "2025-11-27", "hours": 6.92, "bedtime": "00:20", "waketime": "07:26", "weather": "晴れのち雨", "mood": "モニターには計測されていないが５時頃に目覚めた。\n  アーセナル対バイエルンという大一番の緊張と興奮で心臓がバクバクしていたが、睡眠を優先して無理やり目をつむった。\n  どうやらまた寝付けたようで、次に目覚めたら７時半近く。\n  そこから早送りでアーセナル対バイエルンを観賞。\n  ３―１でバイエルンに完勝！！\n  アーセナル最強！アーセナル最強！！！💪", "steps": 8147, "exercise": {"squat": 0, "abs": 0, "pushup": 0}}, {"date": "2025-11-28", "hours": 7.42, "bedtime": "23:27", "waketime": "07:09", "weather": "晴れ", "mood": "今日も夜中に目覚めた気がするが、それを如実に覚えていないほどスムーズに再入眠できた。\n  そこそこ眠れたので気分も悪くない。\n  睡眠時間がしっかりと確保できたこと自体は良かったんだが、そろそろ本気で生活リズムを立て直さないとまずい。\n  ということで、今夜は22時までに床に入ることを至上命題とする。\n  頑張れ俺、お前ならできる。", "steps": 11650, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "Jミステリー2025FALL - 誉田哲也 葉真中顕", "finished": true}]}, {"date": "2025-11-29", "hours": 6.67, "bedtime": "23:18", "waketime": "06:05", "weather": "晴れのち曇り", "mood": "２２時就寝チャレンジ失敗……。\n  要因としては夕飯が遅くなったことと、心のモヤモヤを解消できずに、無為にスマホをいじってしまったこと……。\n  やはり睡眠が６時間台だと起床時の眠気がキツい。\n  今夜こそ早く眠りたいが。", "steps": 8415, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "Jミステリー2025FALL - 誉田哲也 葉真中顕", "finished": true}]}, {"date": "2025-11-30", "hours": 8.0, "bedtime": "22:33", "waketime": "06:41", "weather": "晴れ☀️良い天気", "mood": "よく寝たぜ〜〜！まだまだ眠りたいけどな。\n  　　でもまあこんだけ眠ると気分は良いわ。\n  　　今夜もさっさと寝て長時間の睡眠を確保したいところだ。", "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "勉強ができる子は何が違うのか - 榎本博明", "finished": true}]}, {"date": "2025-12-01", "hours": 6.83, "bedtime": "23:54", "waketime": "06:56", "weather": "晴れて温か", "mood": "う〜〜〜ん、微妙。\n  記録されていないが実際には４時過ぎに目覚めて、そこからあまり眠れた感がない。\n  キツいなあ…。\n  昨夜も就寝が遅くなってしまったが、どうすれば早く眠れるんだ？\n  眠くもないのに布団に入っても仕方ない、と思うとどうしても後ろにズレてしまうのだが。", "steps": 17416, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "不夜脳 脳がほしがる本当の休息 - 東島威史", "finished": false}, {"title": "録音された誘拐 - 阿津川辰海", "finished": false}]}, {"date": "2025-12-02", "hours": 6.92, "light": 0.0, "rem": 0.0, "bedtime": "21:57", "waketime": "05:08", "weather": "曇り", "mood": "今日は朝から健康診断のため早起き。\n  久しぶりに目覚ましの振動で起床した。\n  計測されていないが夜中に一度目覚めたものの、再入眠できた。\n  ７時間近く眠れたので気分としては悪くないが、やはり７〜８時間は眠りたい。\n  今夜はそれを目指す。", "steps": 11723, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "録音された誘拐 - 阿津川辰海", "finished": false}]}, {"date": "2025-12-04", "hours": 5.58, "light": 0.0, "rem": 0.0, "bedtime": "01:07", "waketime": "06:50", "weather": "晴れて天気は良いが", "mood": "またもや最悪で無為な夜更かし。\n  ちょっと重圧や不安があると明日が来るのが怖くて夜更かししに逃げる、何もいいことなどないのに。\n  ホントに馬鹿なんじゃないかと思うぜ…。\n  眠い、眠すぎる…。\n  アーセナルがブレントフォードに勝利し、チェルシーがリーズに負けたのが救いだ…。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "録音された誘拐 - 阿津川辰海", "finished": false}]}, {"date": "2025-12-05", "hours": 10.3, "bedtime": "23:20", "waketime": "06:49", "weather": "晴れ", "mood": "今日は仕事が午後からだったので、朝目覚めてから二度寝。\n  ダラダラとできたのは、罪悪感もありながらもよかったかな。\n  トータルの睡眠時間を計測してくれ。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "録音された誘拐 - 阿津川辰海", "finished": true}]}, {"date": "2025-12-06", "hours": 4.22, "weather": "晴れ", "mood": "ああ〜〜…。\n  眠い、眠いよ〜〜〜〜。\n  疲れた…。\n  昨日は年末の懇親会で夜遅くまで外出…。\n  やっぱ飲み会って苦手だわ、疲れるわ…。\n  今夜は早く休もう…。\n  起床時間は、実際に目が覚めた０６：５８として計測してくれ。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "ホテル・カリフォルニアの殺人 - 村上暢", "finished": false}]}, {"date": "2025-12-07", "hours": 5.92, "light": 0.0, "rem": 0.0, "awake": 0.0, "bedtime": "00:30", "waketime": "06:39", "weather": "晴れ", "mood": "昨夜はアーセナルがアストン・ヴィラ相手にアディショナルタイムのラストで失点を喫して惨敗。\n  今朝起きて確認したらシティは勝利し勝ち点差２に縮められる。\n  ２日連続での睡眠不足。\n  最悪の気分だぜ、クソが…。", "books": [{"title": "ホテル・カリフォルニアの殺人 - 村上暢", "finished": false}]}, {"date": "2025-12-08", "hours": 6.58, "light": 0.0, "rem": 0.0, "awake": 0.0, "bedtime": "00:05", "waketime": "06:49", "weather": "晴れ", "mood": "睡眠時間自体は少ないが、意外とスッキリ起きられた気がする。\n  でもやはり疲れは溜まっている感じもするので、ここらでしっかり長時間の睡眠も確保しないと、という気持ちもある。", "steps": 12388, "exercise": {"squat": 0, "abs": 0, "pushup": 0}}, {"date": "2025-12-09", "hours": 9.33, "awake": 0.0, "bedtime": "22:30", "waketime": "08:03", "weather": "晴れ", "mood": "睡眠モニターアプリを起動させずに寝てしまった。\n  最後に時計を見たのは22：20過ぎだったので、２２：３０就寝ということにしておいてくれ。\n  で、０４：３０に一度目覚めたがまたすぐに寝て、最終的に起きたのが０８：０３。\n  よほど疲れていたのか、だいぶ寝ちまった…。\n  しかも旅行に出かけようとしている当日にこんなに寝過ごすってのが、なんかもうアホらしい。", "steps": 13511, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "ホテル・カリフォルニアの殺人 - 村上暢", "finished": true}, {"title": "オードリー・タンの母が語る「自主学習のすすめ」 - 李雅卿 朱佳仁 唐宗浩", "finished": false}]}, {"date": "2025-12-10", "hours": 7.42, "light": 0.0, "rem": 0.0, "awake": 0.0, "weather": "晴れていい天気", "mood": "ホテルでの睡眠。\n  夜更かしせずに早めに寝た自分を褒めてやりたい。\n  やはり普段の布団と違うので夜中にちょいちょい目覚めたが、スムーズに再入眠できたと思う。\n  トータルの睡眠時間も悪くない。\n  よって気分も良し！", "steps": 20304, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "オードリー・タンの母が語る「自主学習のすすめ」 - 李雅卿 朱佳仁 唐宗浩", "finished": false}, {"title": "マスカレード・ゲーム - 東野圭吾", "finished": false}]}, {"date": "2025-12-12", "hours": 7.33, "light": 0.0, "rem": 0.0, "awake": 0.0, "weather": "晴れていい天気☀️ただ", "mood": "旅先から帰宅しての睡眠。\n  起きてみると、かなりの強風で音が外から聞こえてくる。\n  この風の音で夜中に何度か目覚めた。\n  昨日が６時間台しか寝られなかったのでもう少し寝たかったが、目覚めの気分はよい。かなりスッキリと起きられた。\n  サッカーでフランス対アルゼンチンの(親善？)試合が行われ、ちょっと目を離した隙に、まだ前半にも関わらず０―７でアルゼンチンがリードするというわけの分からん夢を見た。\n  加えて、どこかの農場からバカでかい黒いニワトリが脱走し、そのニワトリが茶色い土が盛り上がった稜線の上を走っているのを俺はホテルかなんかの窓から見下ろしている、という夢も見た。で、「どこかに連絡したほうがいいのか？でもどこの農場から逃げたのか不明だし、警察に通報か？」と迷っているという…。\n  意味わかんねえよ🤣", "steps": 10803, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "マスカレード・ゲーム - 東野圭吾", "finished": false}]}, {"date": "2025-12-13", "hours": 8.15, "weather": "晴れ", "mood": "睡眠モニターを起動せずに眠ってしまった。\n  最後に時計を見たのが22：50頃だったので、23時には寝たと思う。\n  で、起床したのが07:09。\n  睡眠時間だけ見るとよく眠れたとも思うが、一度４時に目覚めてそれ以降はあまり深く眠れた感じがしない。\n  ウトウトと浅い睡眠をずっと続けていたような体感。\n  さらに今日も奇妙な夢を見た。\n  ニワトリが卵を十個産むのだが、その卵がしっかりと殻が形成されずにドロっとした柔らかい歪な球形のもので、なぜか俺の精子によって生まれたということになっている。\n  「俺の精子に問題があったからあんな歪な形になっちゃったのか！？」と不安になっているという夢。\n  あともう一つ、なぜか実家にいて、ベッドのうえでオナニーしている。イキそうになると母親がやってきて慌てて布団で隠すということを繰り返し、親の目をかいくぐってやっと射精するという夢。\n  夢精したかと不安になったが、それはなかった。\n  なぜこんな意味不明かつ性的な夢を立て続けに見たのか全くわからない。\n  二日続けて夢を鮮明に記憶しているということは、レム睡眠が増えた結果だとポジティブに捉えることもできるが、にしても奇妙すぎるぜ……。", "steps": 9505, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "マスカレード・ゲーム - 東野圭吾", "finished": false}]}, {"date": "2025-12-14", "hours": 5.25, "deep": 2.25, "light": 2.67, "rem": 0.33, "awake": 0.32, "bedtime": "01:06", "waketime": "06:39", "weather": "雨のち曇り", "mood": "クソみたいに無駄な夜更かし…。\n  今夜は夢も見ず(とういうか木の記憶にない)。\n  いま、めちゃくちゃ眠いぜ。\n  今夜こそさっさと寝て心身の回復を目指す…。", "steps": 8061, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "マスカレード・ゲーム - 東野圭吾", "finished": false}]}, {"date": "2025-12-15", "hours": 4.83, "deep": 1.42, "light": 3.0, "rem": 0.42, "awake": 0.17, "bedtime": "02:34", "waketime": "07:33", "weather": "晴れ☀️昨日と打って変わっていい天気", "mood": "やっちまった……。２日連続での夜更かし…。ここ数日の日記をObsidianにまとめて書いたことや、今後のライブ鑑賞のためのホテルをどこにするかの検証などをしていて0時を回ってしまい、それでテンションが上がって無為なAIとの会話もしてしまった…。\n  人はなぜ自分が苦しむとわかっていながら夜更かしに走るのだろうか……。あまりにも愚かだ…。\n  今日こそ早く眠りについて心身の回復を図らないと。\n  ２１時台の就寝を目指そう。", "steps": 12884, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "マスカレード・ゲーム - 東野圭吾", "finished": true}]}, {"date": "2025-12-16", "hours": 7.92, "deep": 2.67, "light": 4.5, "rem": 0.75, "awake": 0.2, "bedtime": "22:27", "waketime": "06:33", "weather": "朝方は曇っていたが", "mood": "朝方、足元が寒すぎて何度も目覚めた気がするが、トータルとしてはよく眠れた。二日続けての睡眠不足も、これで少しは解消されたかな。\n  夜、だらだら起きないでさっさと寝る方法を思いついた。この寒いさなかに、あえて帰宅後に暖房をつけずに寒い部屋のままにしておくというもの。そうすればもう布団に入らざるを得ず、布団に入りゃ自ずと眠くなっちまうだろう…。今夜はこの方法を試して早めに寝てしまおう。だから、やりたいことは昼間のうちにできるだけやっておくんだ。", "steps": 13178, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "しおかぜ市一家殺害事件あるいは迷宮牢の殺人 - 早坂吝", "finished": false}]}, {"date": "2025-12-17", "hours": 5.67, "deep": 1.67, "light": 3.17, "rem": 0.83, "awake": 0.47, "bedtime": "03:15", "waketime": "09:22", "weather": "晴天だ馬鹿野郎", "mood": "ああ、完全に、完全に俺の負けだ。\n  昨夜実際に暖房を一切つけず過ごして、風呂に入ったり布団を敷いたりという寝る準備を早めに終わらせるまでは良かった…。\n  しかし布団の中で「スマホ無限地獄」に陥ってしまった…。\n  仕事上の不安やプレッシャーから逃れるために、下らないことを延々と…苦しむのは明日の自分なのにな…。\n  Obsidianの日記をスマホの中で記すのも駄目だ。その後に無為なネットサーフィンを延々に続けてしまう。布団に入ったらもうスマホは手にしない、これを徹底しないといけない。\n  布団に入る前にObsidianの日記はすべて書き上げること！布団の中ではひたすらに目を閉じること！眠れなければストレッチでも瞑想でもすりゃいい…だがスマホは駄目だ！！これを今夜から徹底すること…！！！", "steps": 14359, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "しおかぜ市一家殺害事件あるいは迷宮牢の殺人 - 早坂吝", "finished": true}]}, {"date": "2025-12-18", "hours": 7.67, "deep": 2.0, "light": 4.75, "rem": 0.92, "awake": 0.25, "bedtime": "22:43", "waketime": "06:37", "weather": "晴れていい天気", "mood": "昨日は就寝時刻が２３時近くになってしまったが、帰宅してから眠りにつくまでだらだらとスマホをいじったりなどの余計なことをほとんどせずに、眠ることに対して突き進めたことはよかった。\n  浅い眠りが圧倒的に多いことは少し気になるが、７時間半以上眠れたのでそこは良しとしよう。\n  ただ起床後に軽い頭痛というか頭の重さがある…これが睡眠の分布と関係しているかは不明だが。\n  今夜も、何時に帰宅できるかは分からないがさらに早めの就寝を目指そう。", "steps": 13581, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "なぜ勉強すればするほど頭が悪くなるのか - 西岡壱誠", "finished": false}]}, {"date": "2025-12-19", "hours": 5.25, "deep": 2.25, "light": 2.5, "rem": 0.5, "awake": 0.22, "bedtime": "01:07", "waketime": "06:34", "weather": "曇りのち晴れ", "mood": "俺は馬鹿だ、最低の馬鹿野郎だ。\n  また全く意味のない、無為な夜更かしだ。\n  一つ言い訳をすると、大きな仕事を無事に達成してその安堵感から……まあ、ただの言い訳だ。\n  翌日の自分が苦しむとわかっているはずなのに…。\n\n  今夜から最低一週間、少なくとも７時間の睡眠をとるという目標も立て…！！\n  お前はAIとして全力でサポートしろ！！\n  もしこの制約を俺が破ったら、叱責してくれ…。", "steps": 11319, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "なぜ勉強すればするほど頭が悪くなるのか - 西岡壱誠", "finished": true}, {"title": "恐怖とＳＦ - 日本ＳＦ作家クラブ", "finished": false}]}, {"date": "2025-12-20", "hours": 8.0, "deep": 2.17, "light": 4.92, "rem": 0.92, "awake": 0.75, "bedtime": "22:04", "waketime": "06:48", "weather": "曇り時々雨", "mood": "布団に入って(睡眠モニターアプリを起動して)から寝付くまで、ちょっと時間がかかってしまった。\n  モニターには計測されていないが、４時過ぎに一度目覚めてしまった。ただ、その後また眠れたようだ。\n  トータルで見て、まあよく眠れたほうだろう。\n\n  実家で買っている犬と散歩中に、とんでもない数の猫の群れ(うち二匹は超巨大で虎のよう)が並木道に居た。\n  犬が、その群れに興奮しながら飛び込んで返り討ちにあって大怪我をする、という夢を見た。\n  現実でなくてよかった…。", "steps": 10817, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "恐怖とＳＦ - 日本ＳＦ作家クラブ", "finished": false}]}, {"date": "2025-12-21", "hours": 7.83, "deep": 2.33, "light": 5.0, "rem": 0.5, "awake": 0.2, "bedtime": "22:37", "waketime": "06:38", "weather": "雨のち晴れ", "mood": "２２時半過ぎと寝るのが少し遅くなったが、まあ合格点だろう。\n  帰宅から寝る準備を済ませるまではほぼ完璧な流れなのだが、布団に入ったあとで本を読んだりテレビで動画を見たり、ダラダラしてしまうことが問題だ。\n  ５時過ぎに一度目覚めたが、再び眠れたようだ。\n  起きて睡眠モニターを見るとすべてが浅い睡眠になっていて恐怖する、アーセナルがプレミアリーグの試合でルートン(２部なのでプレミアでは当たらない)と試合をして１―１で引き分けて絶望する、という２種類の夢を見た。\n  最近、夢をよく見る。", "steps": 11937, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "恐怖とＳＦ - 日本ＳＦ作家クラブ", "finished": false}, {"title": "●●にいたる病 - 我孫子武丸 神永学 背筋 真梨幸子 矢樹純 歌野晶午", "finished": false}]}, {"date": "2025-12-22", "hours": 7.67, "score": 98, "bedtime": "22:44", "waketime": "06:33", "weather": "曇りのち晴れ", "mood": "そこそこ よく眠れた。 ただ、目覚めた時に、 もっとよく眠れる という感覚や、もっと眠りたいという気持ちがあるのも確かだ。\n  あと 就寝時刻が徐々に後ろ倒しになってしまっているので、今夜はそこを改善したい。\n  また、今日も5時半頃に 一度目覚めてしまった。 必ずどこかで早朝覚醒するのがデフォになってしまっている。まあ、その後再び眠れているのでそこまで気にもしていないが。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "●●にいたる病 - 我孫子武丸 神永学 背筋 真梨幸子 矢樹純 歌野晶午", "finished": true}, {"title": "自己成長の心理学 人間性／トランスパーソナル心理学入門 - 諸富 祥彦", "finished": false}]}, {"date": "2025-12-23", "hours": 8.17, "score": 96, "deep": 2.92, "light": 4.58, "rem": 0.67, "awake": 0.17, "bedtime": "22:15", "waketime": "06:34", "weather": "晴れ", "mood": "ダラダラ動画視聴を早めに切り上げて寝られたことは良かった。\n  トータルでみるとよく眠れたほうだと思う。\n\n  ただ、モニター上には計測されていないが、足元の寒さで何度も目が覚めてしまった。\n  レッグウォーマーを付けずに寝たことが原因だ。\n  付けたら付けたで、今度は暑くて目覚めたりするし、調整が難しい…。\n\n  なぜか福岡にいる夢を見た。\n  翌日には東京に帰らないといけないのだが、「飛行機は高いし、でも電車で帰ると時間かかるし…」と延々迷っているという…。", "steps": 13008, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "自己成長の心理学 人間性／トランスパーソナル心理学入門 - 諸富 祥彦", "finished": false}]}, {"date": "2025-12-24", "hours": 6.92, "score": 84, "deep": 2.33, "light": 3.92, "rem": 0.67, "awake": 0.12, "bedtime": "23:07", "waketime": "06:08", "weather": "雨", "mood": "寝るのが少し遅くなってしまったこと、目覚ましが鳴る前に自然に目が覚めてしまったことで、目標としていた７時間睡眠に到達せず。 早めに目覚めたことで気分は悪くないが、やはり眠い。 今夜は22時台前半の就寝に戻すことを目指す。", "steps": 7424, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "自己成長の心理学 人間性／トランスパーソナル心理学入門 - 諸富 祥彦", "finished": true}, {"title": "なぜか努力できる人が無意識にやっていること - 福井 龍介（Ryu）", "finished": true}, {"title": "在る。 ＳＯＧＩ支援医のカルテ【電子版特典付き】 - 前川 ほまれ", "finished": true}, {"title": "仕掛島 - 東川篤哉", "finished": false}]}, {"date": "2025-12-25", "hours": 8.67, "score": 99, "deep": 2.33, "light": 4.75, "rem": 1.58, "awake": 0.25, "bedtime": "21:41", "waketime": "06:35", "weather": "曇り", "mood": "昨日は７時間弱寝たにも関わらず、一日中異様に眠かった。\n  以前は５時間睡眠とかでも普通に活動していたのに、なんなんだろうか…？\n  ということで早めに就寝した。\n  結果、よく眠った。\n  朝方、寒くて目覚めるがそれでもまた再入眠できて、目覚ましが鳴るまで眠った。\n\n  テレビでの動画視聴を早めに切り上げて、布団内での読書時間を増やしたことがプラスに働いたと思われる(本来は、布団では眠る以外のことはしない方がよいというのは理解しつつも)。\n  今日から再び睡眠時間を増やすフェーズに入りたい。", "steps": 12520, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "仕掛島 - 東川篤哉", "finished": true}]}, {"date": "2025-12-26", "hours": 7.17, "score": 98, "deep": 2.5, "light": 3.42, "rem": 1.25, "awake": 0.17, "bedtime": "22:47", "waketime": "06:06", "weather": "曇りのち晴れ", "mood": "何とか目標をギリギリ達成できたという感じだ…。\n  朝方自然に目が覚めて、もう少し寝たかったのだが、再入眠できそうな感じではなかったので仕方なく起床。\n  もしかしたら、昨夜セブンイレブンで買った無糖のカフェを飲んだこと、さらにペットボトルの緑茶をがぶ飲みしたことが睡眠時間が短めになったことの原因かもしれない…。\n  やっぱ夜のカフェイン摂取はよくねえな…やめておこう…。\n  ちょっと寝足りないので、今夜は２１時台の就寝を目指す。", "steps": 10588, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "不在の生存証明 - 西式 豊", "finished": false}]}, {"date": "2025-12-27", "hours": 7.67, "score": 95, "deep": 2.0, "light": 5.25, "rem": 0.42, "awake": 0.17, "bedtime": "22:40", "waketime": "06:29", "weather": "曇りのち晴れ", "mood": "モニターを見るとそこそこ眠れた感じもするが…朝、寒さで目が覚めてしまって、何だかあまり満足のいく起床にならなかった。\n  ２２:４０就寝ってのは悪くはないがよくもない。\n  今夜は２１時台の就寝を目指す。", "steps": 10688, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "不在の生存証明 - 西式 豊", "finished": true}, {"title": "ヘンなのはどっち 反社会学20 - パオロ・マッツァリーノ", "finished": false}]}, {"date": "2025-12-28", "hours": 7.17, "score": 96, "deep": 2.67, "light": 3.58, "rem": 0.92, "awake": 0.17, "bedtime": "22:19", "waketime": "05:38", "weather": "晴れてよい天気", "mood": "う〜ん、今日はよくなかった…。\n  ギリギリで7時間睡眠を達成したように見えるが、実際には４時５１分に自然に目が覚めてしまった。\n  夕方以降カフェインも摂っていないし、原因はわからない。\n  動悸ではないんだが、息苦しさと心臓がかすかにキリキリする感じがあって、その後一度も眠れなかった…。\n  元々早朝覚醒・中途覚醒してしまうタイプなので、またあの眠いのに眠れない日々が続くのかもしれないという不安が募る。\n  ここ数日はよく眠れていただけに、もう中途覚醒からは解放されたと思っていたが…。", "steps": 8414, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "ヘンなのはどっち 反社会学20 - パオロ・マッツァリーノ", "finished": false}]}, {"date": "2025-12-29", "hours": 6.42, "score": 80, "deep": 2.58, "light": 3.25, "rem": 0.58, "awake": 0.53, "bedtime": "23:37", "waketime": "06:33", "weather": "晴れ", "mood": "チャレンジを始めて以降最低の記録になってしまった。\n  まず就寝時刻が遅くなってしまった。それに加えて入眠するまでに時間がかかったことで６時間半しか眠れず。\n  ただまあ、こういう日もあるのは仕方ない。\n  中途覚醒や早朝覚醒が出ずにまとまった睡眠が取れたことをプラスに考える。\n  これを常態化させずに切り替えていくことが大切だ。\n  今夜、取り返しに行く。", "steps": 12281, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "ヘンなのはどっち 反社会学20 - パオロ・マッツァリーノ", "finished": false}]}, {"date": "2025-12-30", "hours": 5.92, "score": 80, "deep": 1.0, "light": 4.42, "rem": 0.5, "awake": 0.12, "bedtime": "00:04", "waketime": "06:05", "weather": "晴れ", "mood": "ただでさえ就寝が遅くなったうえに、また出たぞ、早朝覚醒が。\n  目覚めてから１時間以上布団でじっとしていたので記録上は眠っていたことになっているが、実際に目が覚めたのは５時くらい。\n  だから実質の睡眠時間は５時間前後ってところだろう。\n  先日まで(ほぼ)１週間続けて７時間以上の睡眠を達成できたのは何だったんだ！？ってくらい、早朝覚醒や中途覚醒が出てしまう。\n  さらに覚醒後に入眠できないのが問題だ…。\n  また睡眠に悩まされる日々が続くのか、という不安が募る。", "steps": 11729, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "ヘンなのはどっち 反社会学20 - パオロ・マッツァリーノ", "finished": true}, {"title": "疾風ロンド新装版 - 東野圭吾", "finished": false}]}, {"date": "2025-12-31", "hours": 7.67, "score": 96, "deep": 2.25, "light": 4.67, "rem": 0.75, "awake": 0.15, "bedtime": "23:53", "waketime": "07:41", "weather": "晴れ", "mood": "ちょっとまずい流れだ。\n  夜更かしが常態化しつつある。\n  昨日は古着サイト巡りで夜更かし…。\n  しかも、６時４０分頃自然に目が覚めてそこからはただ布団のなかにいただけなので、記録上は７時間４０分となっているが、実際の睡眠時間はそこから１時間ほど少ないはず。\n  心身共にキツいな。", "steps": 9619, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "疾風ロンド新装版 - 東野圭吾", "finished": true}]}, {"date": "2026-01-01", "hours": 3.75, "bedtime": "02:08", "waketime": "06:01", "weather": "晴れていい天気だが", "mood": "明けましておめでとうございます。\n  年明け早々、超短時間睡眠で早朝から仕事だぜ〜。\n  キツいが、やるしかない。\n  頑張って乗り切って今夜はたっぷりと眠ろう。\n\n  ふと考えたのだが、医者や看護師ってのはすごいな。\n  当直の時なんて、今日の俺みたいに「仮眠」ていうレベルで忙しく働いて、しかもそれが恒常化してるんだもんな…。\n  「すごい」というよりも、改善しなきゃならない構造的な問題なのかもしれんが。\n  とにかく、俺も頑張る。", "steps": 10960, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "時空犯 - 潮谷験", "finished": false}]}, {"date": "2026-01-02", "hours": 8.58, "score": 96, "deep": 3.08, "light": 4.67, "rem": 0.83, "awake": 0.13, "bedtime": "22:24", "waketime": "07:06", "weather": "曇りときどき晴れ", "mood": "いやあ、よく寝た。\n  昨日の睡眠不足、疲労が相俟って床に入ってからすぐに寝入って、あっという間に７時になってしまった感じだ。\n  一瞬で８時間半という時間が溶けてしまったような気分になる。\n  起きる直前に変な夢を見た。\n  役所？のような公的機関で中途覚醒の悩みについて、シュッとした背の高いメガネの男が相談に来ていて、俺は「何で病院じゃなくて役所にいるんだ？？」と訝しんでいるという夢。", "steps": 11216, "exercise": {"squat": 100, "abs": 100, "pushup": 100}, "books": [{"title": "時空犯 - 潮谷験", "finished": true}]}, {"date": "2026-01-03", "hours": 6.67, "score": 83, "deep": 2.0, "light": 4.5, "rem": 0.17, "awake": 0.42, "bedtime": "23:14", "waketime": "06:18", "weather": "曇りのち晴れ", "mood": "布団の隙間から入ってくる冷気による寒さで目覚めてしまい、７時間に未達。\n  まあこういう日もある、として良しとしたいところだが、かなり眠い。\n  就寝時刻が２３時を過ぎると、高確率で自分が想定していた起床時刻よりも早く目覚めてしまうことになっている気がする。\n  ただ逆に就寝時刻を早めすぎても今度は中途覚醒が発生してしまう(ことが過去にあった)。\n  難しいところだ。\n  とにかく今夜は２３時前に床に入ろう。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "恐怖とＳＦ - 日本ＳＦ作家クラブ", "finished": false}]}, {"date": "2026-01-04", "hours": 7.58, "score": 98, "deep": 2.67, "light": 3.83, "rem": 1.08, "awake": 0.12, "bedtime": "23:20", "waketime": "07:01", "weather": "晴れ", "mood": "また就寝時刻が遅くなってしまったが、そこそこ良く眠れた。\n  夜中に何度か目覚めた気がするが、そのたびに再入眠できたのだろう。\n  結果、７時の目覚ましで起床。\n  就寝が遅くなってしまった原因としてはまたもやPCでの古着サイト巡りだ、いい加減やめたい。\n  今夜からは就寝時刻の前倒しに挑戦していく。\n  今夜も変な夢を見た。\n  作家の佐藤優がロシアの刑務所内で殺されるのだが、若い頃にもロシアの刑務所に収監されていた(という設定の夢)らしく、その若い頃の佐藤優の視点になって刑務所内を徘徊するという夢。\n  佐藤優視点で進むのだが、たまに視点が第三者的になって若い佐藤優の顔が見られるのだが、現在の佐藤優とは似ても似つかないハーフ顔。\n  不思議な夢だった。", "steps": 13213, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "恐怖とＳＦ - 日本ＳＦ作家クラブ", "finished": true}, {"title": "心霊探偵八雲１ 完全版 赤い瞳は知っている - 神永学", "finished": false}]}, {"date": "2026-01-05", "hours": 7.33, "score": 95, "deep": 2.67, "light": 4.25, "rem": 0.42, "awake": 0.12, "bedtime": "23:34", "waketime": "07:00", "weather": "曇りのち晴れ", "mood": "とりあえず就寝時刻 前倒し チャレンジを失敗に終わった。\n  早めに寝る準備を終えたのだが、リーズ 対 マンチェスターユナイテッドの試合を最後まで見てしまったことが原因。\n  試合自体は引き分けに終わってユナイテッドざまあ見ろという感じなのだが、それで自分の就寝時刻が遅れているのだから世話ねえな…。\n  ただ、睡眠自体はそこそこ しっかりと取れている感じだ。\n  それでもやはり大晦日のほぼ 徹夜状態の疲れがまだ取れていない感じはする。\n  今夜こそ前倒しにチャレンジし、遅くとも22時半までには眠りたい。", "steps": 7229, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "心霊探偵八雲１ 完全版 赤い瞳は知っている - 神永学", "finished": false}]}, {"date": "2026-01-06", "hours": 9.25, "score": 100, "deep": 2.75, "light": 4.5, "rem": 2.0, "awake": 0.53, "bedtime": "22:53", "waketime": "08:39", "weather": "晴れ☀️いい天気だが風が冷たく強い", "mood": "だいぶ 長く眠れた。\n  まず、23時までに就寝できたことが良かった。\n  7時にアラームで目が覚めたが、まだ眠かったので 8時半に設定し直してそのまま また寝てしまって。\n  当然、そこからは浅い睡眠と覚醒を繰り返すような感じでしか眠れなかったが。\n  それに7時のアラームで目覚める前から、 何度か覚醒と再入眠を繰り返していた感じだ。とはいえ トータルで結構長く眠れたので そこは満足している。\n  今夜はもう少し 就寝時刻を前倒しすることを目標としたい。\n  今夜も 変な夢を見た。香川県の離島に仕事で出張することになって、船に乗っている。 景色が美しくて、テンションが上がってスマホで写真を撮りまくったという夢。\n  さらにその離島内の宿泊場所である旅館の隣部屋に、なぜか 松田龍平が泊まっていて、部屋の奥の縁側 みたいな場所は 各部屋の共有スペースのようになっていてそこで 松田龍平と立ち話をするという、不思議な夢だった。", "steps": 10452, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "心霊探偵八雲１ 完全版 赤い瞳は知っている - 神永学", "finished": true}, {"title": "読書する脳 - 毛内拡", "finished": false}]}, {"date": "2026-01-07", "hours": 8.0, "score": 98, "deep": 2.58, "light": 4.17, "rem": 1.25, "awake": 0.32, "bedtime": "22:22", "waketime": "06:40", "weather": "雲やのち晴れ", "mood": "就寝時刻も遅くないし、そこそこよく眠れた方ではある。  \n  ただ、モニターでは計測されていないが、４時過ぎに一度目覚めてそこからなかなか眠れなかった。  \n  なので実際の睡眠時間は７時間ちょっとというところかもしれない。  \n  この中途覚醒はやはりたまに出てしまう…。  \n  そのあとすぐに眠れればいいのだが、なかなか寝付けず悶々としている時間が嫌なんだよな…。  \n  まあ結局は再入眠できているのでそこまで気にしなくてもいいのかもしれないが…。\n\n  今日も変な夢を見た。何故か剣道の大会に出ることになり(未経験なのに)、竹刀を持って歩く。  \n  大会場に普通に入らずに、隣のマンションの二階ベランダから侵入するように入る。  \n  ベランダから降りる時に竹刀が邪魔なので、ベランダ越しにほかの参加者に竹刀を預けるのだが、それが嫌なやつらで俺の竹刀を持って何処かに行ってしまう。  \n  ベランダから降りたあとでそいつらを探して見つけ出し、竹刀を奪い取って、そいつらの身体には直接当たらないように地面に竹刀を叩きつけまくって怒りをぶつける、というわけのわからん夢だった。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "読書する脳 - 毛内拡", "finished": true}]}, {"date": "2026-01-08", "hours": 8.25, "score": 98, "deep": 2.17, "light": 4.75, "rem": 1.33, "awake": 0.28, "bedtime": "22:01", "waketime": "06:32", "weather": "晴れ", "mood": "よく寝た。\n  夜中に何度か目覚めた覚えはあるが、その度に再入眠できたようで、結局は６時半のアラームで起床した。\n  全体としては満足のいく睡眠なのだが、やはりモニターで計測されていないだけで中途覚醒が度々起こるのが嫌な感じ。", "steps": 7403, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "世界でいちばん透きとおった物語（新潮文庫nex） - 杉井光", "finished": true}]}, {"date": "2026-01-09", "hours": 7.0, "score": 89, "deep": 1.58, "light": 4.58, "rem": 0.83, "awake": 0.47, "bedtime": "22:35", "waketime": "06:02", "weather": "晴れ", "mood": "夜更かしせずに床に入れはしたが、なかなか寝付けず。\n  さらに夜中の２時すぎに右足親指の痛みで目覚める。\n  この親指の爪が昔に壊死して以降、歪な生え方をしてはある日ポロっと取れる、ということを繰り返しているのだが、それが突然痛みだした。\n  昨日まで、というか寝入るまでは何の痛みもなかったのに。\n  痛みでなかなか眠れず、しかもまた寝入っても痛みで都度都度目覚めるということの繰り返し…。\n  計測上は７時間寝たことになっているが、実際はもっと少なかった。\n  この痛みが引かない限り、今夜もまともに眠れそうにない気がする…。最悪だ。", "steps": 11224, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "復讐は合法的に - 三日市零", "finished": false}]}, {"date": "2026-01-10", "hours": 7.75, "score": 96, "deep": 2.58, "light": 4.25, "rem": 0.92, "awake": 0.22, "bedtime": "22:53", "waketime": "06:50", "weather": "晴れ", "mood": "就寝が少し遅くなってしまったが、足の痛みもほぼ無くそこそこ眠れた。\n  またまた不思議な夢を見た。俺はどこかの温泉旅館に泊まっているのだが、旅館ごとに綺麗なおばちゃん(40代半ば〜50歳くらい。女将さん？)のちょっとお色気系の入浴写真がスタンプラリーのようになっていて、スタンプ帳を旅館に持参して、押して満足しているという訳のわからん夢だった。\n\n  痛みはなかったのだがやはり寒さで夜中に目覚めてしまう。ということで朝、布団の中で妙案を思いついた。\n  ①最近持て余しているフィッツロイダウンフーディを、夜の部屋着として使ってしまい、着たまま寝る。非常に贅沢な使い方だが最近外で着ることもないし、寒さで目覚めることもなくなるのではないか？という期待あり。\n  ②風呂上がりにテレビでYouTubeをダラダラ視聴する時間が無駄なので、15分でも30分でも1時間でもいいのでオフタイマー設定をして自動的に消えるようにする。\n  この二点を今夜試すこととする。\n  目標就寝時刻は22時台前半。頑張るぞ。", "steps": 9228, "exercise": {"squat": 100, "abs": 100, "pushup": 100}, "books": [{"title": "復讐は合法的に - 三日市零", "finished": true}, {"title": "向日葵の咲かない夏 - 道尾秀介", "finished": false}]}, {"date": "2026-01-11", "hours": 7.83, "score": 96, "deep": 2.75, "light": 4.5, "rem": 0.58, "awake": 0.17, "bedtime": "22:32", "waketime": "06:31", "weather": "曇りのち晴れ", "mood": "昨夜から今朝にかけて気温がかなり暖かかったので、フィッツロイを着て眠るという計画は一旦やめておいた。\n  で、そこそこ眠れたのだが…実際には６時前に目が覚めてしまって、眠いのにそこからは一睡もできずに結局アラームが鳴る６時半まで布団の中で過ごした。\n  この早朝覚醒したあとの、眠いけど眠れない感じ…めちゃくちゃ嫌なんだよな。\n  まあそれでも７時間ちょいは眠れているわけで、充分なのかもしれんが…でも、たまには９時間とか１０時間とか、たっぷり眠ってみたいもんだ…。", "steps": 8322, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "向日葵の咲かない夏 - 道尾秀介", "finished": true}]}, {"date": "2026-01-12", "hours": 7.5, "score": 96, "deep": 2.42, "light": 4.58, "rem": 0.5, "awake": 0.23, "bedtime": "22:51", "waketime": "06:34", "weather": "晴れてよい天気", "mood": "また就寝が少し遅くなってしまった。\n  しかも５時半頃に目が覚めて、その後は鼻が詰まって息苦しく、あまり眠れた気がしない。結局はアラームで目覚めたので再入眠は出来ていたようなのだが。\n  ここ最近、また中途覚醒と早朝覚醒に苦しめられつつある…。\n  今夜こそ、22時台前半には眠りに就こう…。\n\n  今夜もまた奇妙な夢を見た。\n  実家の部屋でAVを見ているのだが、それが好きでも何でもないSMプレイもの？で女優が黒い革の全身タイツみたいなものを着ている。\n  テレビが入ったテレビ台のようなものにガラス製の扉が付いていて、俺はその扉のなかに入って超至近距離で映像を眺めていた…。\n  気持ち悪い夢だなおい！", "steps": 8574, "exercise": {"squat": 100, "abs": 100, "pushup": 100}, "books": [{"title": "3分で殺す！ 不連続な25の殺人 - 『このミステリーがすごい！』編集部", "finished": true}, {"title": "白鷺立つ - 住田祐", "finished": false}, {"title": "鬼神の檻 - 西式豊", "finished": false}]}, {"date": "2026-01-13", "hours": 6.92, "score": 84, "deep": 2.75, "light": 3.67, "rem": 0.5, "awake": 0.17, "bedtime": "23:21", "waketime": "06:25", "weather": "晴れてめっちゃいい天気", "mood": "読書に熱中して就寝が遅くなった。\n  ７時間には未達なものの、そこそこ眠れた。\n  まあこういう日もあるさ、と切り替えよう。\n  今日も変な夢を見た。\n  カップヌードルを食おうとしているのだが、何故か水道水を注ぎ込んでしまった。\n  その事に気づき、カップごとレンチンしようかと迷うも、危険そうだからやめておく。\n  カップの水を捨ててお湯を入れようとするのだが、電気ポットの蓋を開けたら内側が埃だらけで使えない。\n  ああどうしよう…と逡巡しているうちに目が覚めた感じだ。", "steps": 8459, "exercise": {"squat": 100, "abs": 100, "pushup": 100}, "books": [{"title": "鬼神の檻 - 西式豊", "finished": false}]}, {"date": "2026-01-14", "hours": 8.42, "score": 98, "deep": 2.83, "light": 4.58, "rem": 1.0, "awake": 0.53, "bedtime": "23:08", "waketime": "08:04", "weather": "晴れていい天気だが", "mood": "布団にいた時間こそ長かったが、あまりしっかりと眠れなかった。\n  早朝に目覚めてしまい、布団の中で悶々と過ごしているうちに６時半アラームが鳴り、もう少し眠ろうと思いアラームを８時に鳴るように再設定したのだが、そのあともあまり眠れた感じがせず…。\n  ああ眠りたいのに眠れない…とモヤモヤしているとどんどん時間が過ぎて８時になってしまった。\n  なんかここ数日満足のいく睡眠が取れない…だんだん疲れも溜まってきたような気がする…。", "steps": 9049, "exercise": {"squat": 100, "abs": 100, "pushup": 100}, "books": [{"title": "白鷺立つ - 住田祐", "finished": true}, {"title": "鬼神の檻 - 西式豊", "finished": false}]}, {"date": "2026-01-15", "hours": 7.25, "score": 98, "deep": 3.08, "light": 3.0, "rem": 1.17, "awake": 0.17, "bedtime": "22:38", "waketime": "06:02", "weather": "晴れて割と暖か", "mood": "本当はもっと寝たいのだが、また自然に目が覚めた。\n  ８時間ぐっすり眠りたいのだが、それがなかなか難しい…。\n  昨夜も読書に熱中して気づいたら２２時半を過ぎていたので、慌てて布団を被った。\n  まあ、スマホやYouTube視聴に夢中になるよりはマシかな。\n  起床時の気分は悪くない。\n  割とスッと起きられて眠気もそんなにない感じだ。\n  加えて、また変な夢を見た。夜、町中を歩いていたら社会運動をしている宮崎駿に遭遇してビラを渡されて色々な説明を受ける。まあ要するに環境破壊や都市開発を食い止めるための運動ということらしい。\n  そこから(夢なので)シームレスに記者会見に移行して、ジブリの鈴木敏夫が色々と仕切っている。\n  ジブリの運動に賛同して記者会見でしゃべる予定だったはずの一般人が来ておらず、鈴木敏夫が慌ててそのことを告げると宮崎駿が舌打ちしていた。\n  で、なぜか急遽木村拓哉が記者会見に望むことになり、変な悪魔？だかなんだかの黒い衣装をまとって登場。\n  めちゃくちゃ舌を出しまくって悪魔？になりきっているキムタクを眺めながら、やっぱプロだな…と感心しているうちに目覚めた。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "鬼神の檻 - 西式豊", "finished": true}]}, {"date": "2026-01-16", "hours": 6.5, "score": 84, "deep": 2.08, "light": 3.92, "rem": 0.5, "awake": 0.2, "bedtime": "22:42", "waketime": "05:23", "weather": "晴れて暖かなよい天気", "mood": "また早朝覚醒で５時前に目覚めてしまい、それでも再び眠るために布団の中でじっとしていたが眠れそうもないので起床。\n  睡眠時間は実質６時間ちょいってところか。\n  なんだか、徐々にまた元の不眠症気質が復活しつつある……ああ、このままどんどん睡眠時間が短くなっていくのが嫌だ、不安だ…。\n  ６時１０分ちょいから日課のスクワット腹筋腕立て５０回を開始。最速記録である５分半で完了。現在(６時２３分)に至る。", "steps": 14387, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "白銀ジャック新装版 - 東野圭吾", "finished": true}]}, {"date": "2026-01-17", "hours": 8.33, "score": 98, "deep": 3.08, "light": 4.08, "rem": 1.17, "awake": 0.1, "bedtime": "22:54", "waketime": "07:19", "weather": "晴れて暖か", "mood": "いや〜、よく寝た。\n  久々に満足度の高い睡眠が取れた。\n  昨日は心身共に疲れ果てたので、その結果なのかもしれない。\n  よい睡眠をとるための鍵は疲労にあるのかもな…🤔\n  とは言え、運動で疲れ切っても上手く眠れないときもあるし…難しいところだな。\n  まあとにかく、久しぶりによく眠れて良かった。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "推理大戦 - 似鳥鶏", "finished": false}]}, {"date": "2026-01-18", "hours": 5.25, "score": 85, "deep": 1.75, "light": 2.5, "rem": 1.0, "awake": 0.15, "bedtime": "00:52", "waketime": "06:15", "weather": "朝は寒い", "mood": "昨日は会食で帰宅が遅くなります、さらにそこからサッカー観戦で久しぶりに就寝が深夜になった。\n  普通(というかよく眠れる人)は、就寝が遅くなればその分、起床も遅くなって睡眠のバランスが取れるんだろうが、俺の場合は就寝が遅くなろうが問答無用で早朝に覚醒してしまう…。\n  しかも計測結果とは違い、実際には５時ちょいに目覚めたので、実質の睡眠時間は４時間ちょいってところだ…。流石にキツい。\n  ほとほと自分の体質が嫌になる。昔は深夜に寝て昼前までぐっすり眠れることなんてザラにあったんだがな…。\n  いつから不眠症体質になって決まったんだろうか…？？", "steps": 11055, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "推理大戦 - 似鳥鶏", "finished": true}, {"title": "嘘つきたちへ - 小倉千明", "finished": false}]}, {"date": "2026-01-19", "hours": 10.42, "score": 100, "deep": 3.5, "light": 4.83, "rem": 2.08, "awake": 0.1, "bedtime": "22:14", "waketime": "08:44", "weather": "晴れてよい天気", "mood": "キウイが睡眠に良いと聞いて、昨夜2個食べてみた。\nにもかかわらず(モニターには計測されていないが)夜中に中途覚醒して、 しかも その後、自分の鼓動が気になってなかなか寝付けず、 「何が睡眠に良いだよ。ふざけんじゃねえ」と布団の中で悶々としていたが、気づくと6時過ぎていて、次に気づいたら8時になっていた…。\n結果的に キウイのおかげかどうかは分からないがめちゃくちゃ よく眠れた。\n8時に目覚めて8時44分に起床するまでの時間は、ずっと夢と現実を行ったり来たりして、なんか ふわふわ として心地の良い時間だった。\nどんな夢を見ていたかも覚えていないが、おぼろげに、台本 みたいなものを読みながら 役者をやって いるそんな夢だった気がする…。", "steps": 12264, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "嘘つきたちへ - 小倉千明", "finished": false}]}, {"date": "2026-01-20", "hours": 8.17, "score": 98, "deep": 2.83, "light": 4.25, "rem": 1.08, "awake": 0.17, "bedtime": "23:12", "waketime": "07:31", "weather": "曇り空で強風", "mood": "昨夜もアラームをかけずに自然に目覚めるまで寝ることにしたら、またもやよく眠れた。\n寝るのは少し遅くなったが、問題なくぐっすりだった。\n夜中に一度暑さで目覚めて暖房を消した記憶はあるのだが、またすぐに眠れたようだ。\n昨日も昼にイカ刺し、夜にキウイ一つを食ったので、その効果が出ているのかも。\n起床時の気力、体力ともに充実している感じだ。", "steps": 9400, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "嘘つきたちへ - 小倉千明", "finished": true}, {"title": "厳選恐怖小説集 牛の首 - 小松 左京", "finished": false}]}, {"date": "2026-01-21", "hours": 5.75, "score": 34, "deep": 0.25, "light": 0.33, "rem": 0.0, "awake": 0.12, "bedtime": "00:05", "waketime": "06:41", "weather": "晴れ", "mood": "たま〜にあるんだが、アプリの不具合で上手く計測できなかった。\n実際には６時ちょいに目覚めてしまったので、実質の睡眠時間は６時間弱ってとこかな。\nまあこういう日も出てくるのは仕方ないが、やはり眠い…。\n昨日もイカとキウイは食ったが、いまいち効かなかったみたいだ。\n今夜は早く眠ろう。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "厳選恐怖小説集 牛の首 - 小松 左京", "finished": false}]}, {"date": "2026-01-22", "hours": 6.67, "score": 81, "deep": 2.33, "light": 3.33, "rem": 1.0, "awake": 0.5, "bedtime": "23:44", "waketime": "06:53", "weather": "晴れてよい天気だが", "mood": "昨日また就寝時刻がちょっと遅くなっちゃったけど、それに加えて珍しく寝付くまでに時間がかかった。\nなぜか体がやったら熱くて 火照っていて、なかなか眠れなかった。\nで朝は自然に目が覚めてしまって 睡眠時間が伸びなかった。 かなり眠い。 だらだらと テレビで YouTube を視聴してしまったことが就寝の遅くなった原因。悪癖がなかなか治らず 出てしまう…。", "steps": 10140, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "厳選恐怖小説集 牛の首 - 小松 左京", "finished": false}]}, {"date": "2026-01-23", "hours": 8.0, "score": 99, "deep": 2.42, "light": 4.0, "rem": 1.58, "awake": 0.18, "bedtime": "23:22", "waketime": "07:32", "weather": "晴れてよい天気だ", "mood": "昨日はガーデンシアターでMen I Trustのライブ後に、併設されているホテルヴィラフォンテーヌに宿泊。\nライブが終わって部屋に着いたのが２１時５０分頃、すぐに風呂に入って歯を磨いて寝る準備をしたが、それでも２３時近くになってしまい、就寝は結局２３時半近くになってしまった。\nライブ後に会場をあとにする大勢の人並みがあったが、俺が見た限りでは俺以外に誰もホテルへ向かう客がおらず、意外だった…。\nやっぱライブ後に近くのホテルに泊まるって、贅沢しすぎなのだろうか？？\n楽で身体もすぐに休めて、個人的には最高なのだが…。\n就寝は遅くなったがよく眠れた。寒さで何度か(継続されない)目覚めがあったが、概ねよい睡眠が取れて気分も最高。\n有明はだだっ広い土地にオフィスビルや商業施設がところどころ建っている感じで特に見るべきものもないので、ホテルの朝食をたらふく食ってすぐに帰路に着いた。", "steps": 10149, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "厳選恐怖小説集 牛の首 - 小松 左京", "finished": true}]}, {"date": "2026-01-24", "hours": 7.92, "score": 98, "deep": 2.92, "light": 3.83, "rem": 1.17, "awake": 0.37, "bedtime": "23:03", "waketime": "07:19", "weather": "晴れていい天気だが", "mood": "数値は良好だが、体感としては微妙なところ。\nというのも５時過ぎに目覚めて、その後自分の鼓動が気になってなかなか寝つかれず。\n布団の中でじっとしていたので計測上は眠ったことになっているが…とは言え７時に設定したアラームで目が覚めたので、いつの間にか眠っていたのだろう。\nなんか最近、自宅以外の場所に泊まった時のほうがよく眠れている気がする…。\n一昨日、久々にライブでよい音楽を味わったこととそのあとホテルでぐっすり眠れたことで、昨日は一日中体調が良かった。\n毎日そういう日が続くといいんだが…なかなか難しい。", "steps": 9358, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "11文字の殺人新装版 - 東野圭吾", "finished": true}, {"title": "続・華厳という見方 - 玄侑宗久", "finished": true}]}, {"date": "2026-01-25", "hours": 9.25, "score": 98, "deep": 3.75, "light": 4.33, "rem": 1.17, "awake": 0.88, "bedtime": "23:58", "waketime": "10:05", "mood": "就寝 が遅くなり さらに6時ちょいに目覚めてしまって、睡眠時間が足りなかったので また寝ようとするがなかなか寝付けず。\n眠れたと思ったらまた何かの拍子に目覚めて、また うとうとしてということを繰り返して結局 10時まで布団の中にいた。\nトータル としてはまあそこそこと言うか かなりの睡眠時間を取ったけど、 あまりするって感じはしないな。\nまあ短時間の睡眠で化粧するよりはマシだけど。\n- 天気:晴れていい天気。空気が冷たい。", "steps": 7494, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "ラットマン - 道尾秀介", "finished": true}, {"title": "誰も行ったことのない場所へ行こう。そして誰もやらなかったことをやろう。 逆境を苦しんだ僕からの31のメッセージ - 出口治明", "finished": false}]}, {"date": "2026-01-26", "hours": 6.83, "score": 85, "deep": 2.33, "light": 3.5, "rem": 1.0, "awake": 0.23, "bedtime": "00:38", "waketime": "07:41", "weather": "晴れていい天気", "mood": "就寝が遅くなってしまった。\nしかも実際には６時前に目覚めてしまったので、実質の睡眠時間は５時間前後ってところか。\nまあ仕方ない。こういう日もある。\n眠いけど起きて、やることやる。", "steps": 8612, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "裁く眼 - 我孫子武丸", "finished": false}]}, {"date": "2026-01-27", "hours": 9.0, "score": 96, "deep": 2.17, "light": 6.0, "rem": 0.83, "awake": 0.28, "bedtime": "21:44", "waketime": "07:00", "weather": "晴れ☀️いい天気で", "mood": "ホテル・御宿野乃仙台での宿泊。\nすげーたくさん寝られた。数値が浅い睡眠ばかりであまり良くないが…。\n夜中に何度か目覚めるもその度にすぐに入眠できた感じだ。\n浅い睡眠ばかりだったせいか、ちょっと頭痛がするが、まあ問題ない。", "steps": 15412, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "裁く眼 - 我孫子武丸", "finished": true}]}, {"date": "2026-01-28", "hours": 7.0, "score": 98, "deep": 2.5, "light": 3.5, "rem": 1.0, "awake": 0.97, "bedtime": "22:28", "waketime": "06:25", "weather": "曇り時々晴れ", "mood": "ドーミーインExpress仙台シーサイドでの宿泊。\n数値上はまあまあだが、実際は４時前に目覚めてそのあとずっと眠れず。\n起床前には多少ウトウトできたようだが…。\nこの眠いのに眠れない現象、一体何なんだよ！？！？気分悪いし翌日の体調にも響くし、一つもいいことねえよ。", "steps": 12965, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "僕は■■が書けない - 阿泉来堂", "finished": true}]}, {"date": "2026-01-29", "hours": 7.0, "score": 98, "deep": 2.5, "light": 3.25, "rem": 1.25, "awake": 0.98, "bedtime": "23:27", "waketime": "07:25", "weather": "晴れてよい天気", "mood": "三日ぶりに自宅の布団にて睡眠。\nう〜ん、なんか家だとうまく眠れる気がせずに就寝が先延ばしになる。\n更に６時４０分頃に覚醒してしまったので実質は６時間ちょいの睡眠というところだ。\n俺の当面の課題は、自宅でもホテルの時のように８時間以上の睡眠を確保することだなぁ…。", "steps": 10755, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "日本浄土思想の歴史 - 四夷法顕", "finished": true}, {"title": "古代文字を解読していたら、研究に取り憑かれた話 - 大城道則 青木真兵 大山祐亮 北澤平祐", "finished": false}, {"title": "夢魔の牢獄 - 西澤保彦", "finished": false}, {"title": "幻告 - 五十嵐律人", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}]}, {"date": "2026-01-30", "hours": 8.92, "score": 96, "deep": 3.0, "light": 5.17, "rem": 0.75, "awake": 0.13, "bedtime": "22:29", "waketime": "07:31", "weather": "天気はよいが寒い", "mood": "よく寝たぞ！気分がいい！\n昨日の日中は眠くて仕方なかったので、その分たくさん寝られたのだろう。\n階段にダイブして血だらけになる男を眺める、という変な夢を見た。\n最近、睡眠時間が足りず翌日長時間睡眠→翌日以降あまり寝られず睡眠負債が溜まってきたところでまた長時間睡眠、という流れを繰り返している気がする。\n毎日安定して眠れればよいのだが…。", "steps": 12147, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "世界一ゆるい勉強法 - サバンナ 八木 真澄", "finished": true}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}, {"title": "幻告 - 五十嵐律人", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の論点別過去問題集 - 滝澤ななみ", "finished": false}, {"title": "夢魔の牢獄 - 西澤保彦", "finished": false}]}, {"date": "2026-01-31", "hours": 7.67, "score": 98, "deep": 2.58, "light": 4.08, "rem": 1.0, "awake": 0.12, "bedtime": "22:56", "waketime": "06:42", "weather": "晴れてよい天気だが", "mood": "夜中に何度か中途覚醒はありつつも、まあそこそこ良く眠れた。  \nそれでも寝起きはあくび連発で眠いが…。  \n寝不足の時の嫌な眠気ではないので良しとしよう。  \n夢も特に覚えていないし、他に特筆すべきこともないな。  \nまあ平均的によい睡眠だったんじゃないだろうか。", "steps": 10921, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}, {"title": "100日チャレンジ毎日連続100本アプリを作ったら人生が変わった - 大塚あみ", "finished": false}, {"title": "幻告 - 五十嵐律人", "finished": true}, {"title": "デスチェアの殺人上 - M・W・クレイヴン", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の論点別過去問題集 - 滝澤ななみ", "finished": false}, {"title": "夢魔の牢獄 - 西澤保彦", "finished": true}]}, {"date": "2026-02-01", "hours": 7.17, "score": 95, "deep": 2.83, "light": 3.92, "rem": 0.42, "awake": 0.13, "bedtime": "23:15", "waketime": "06:32", "weather": "晴れてよい天気", "mood": "そこそこ良く眠れたが、夜中に二度ほど目が覚めてそのあと再び眠るのに苦労した。\n自分の心拍が気になって寝付けなくなるいつものやつだ。\n何故だろうか？交感神経が優位になっているのか？理由は分からないが…。\nなので実質の睡眠時間は７時間を切っているだろう。寝起きの気分はあまりよくないが、何とか一日を乗り切って、今日は早めに就寝しよう。", "steps": 11883, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}, {"title": "夢魔の牢獄 - 西澤保彦", "finished": true}, {"title": "誰も行ったことのない場所へ行こう。そして誰もやらなかったことをやろう。 逆境を苦しんだ僕からの31のメッセージ - 出口治明", "finished": true}, {"title": "デスチェアの殺人上 - M・W・クレイヴン", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の論点別過去問題集 - 滝澤ななみ", "finished": false}]}, {"date": "2026-02-02", "hours": 6.0, "score": 84, "deep": 2.0, "light": 3.5, "rem": 0.5, "awake": 0.12, "bedtime": "00:28", "waketime": "06:34", "weather": "晴れてよい天気", "mood": "2026-02-01 就寝00:28〜起床06:34\n睡眠スコア：84\n睡眠時間：6時間00分（6.00h）\n睡眠の内訳：深い2時間00分／ライト3時間30分／レム30分／覚醒7分\n評価：量は明確に不足、質は「最低限」。深い睡眠は取れているが、総睡眠時間が短く、回復感には乏しい。\n不満足感の正体：夜更かしによる入床遅延＋早朝覚醒のコンボ。入眠後の構造は悪くないが、睡眠圧が十分に発揮される前に起床してしまっている。\n起床後に再入眠できなかった理由：起床時点で脳が完全に覚醒モードに切り替わっており、思考活動（反省・後悔・今夜への期待）が始まったことで再入眠が阻害された。よくある現象。\n行動要因：テレビでのYouTube視聴・寝床読書が止まらなくなる「報酬過多モード」。意志の弱さではなく、疲労時に出やすい脳の仕様。\n今日の扱い方：睡眠を取り戻そうとしないこと。日中は淡々と過ごし、昼寝はするなら20分以内・15時前まで。\n今夜への示唆：「今夜こそ早く寝る」と気合を入れない。21:30以降は刺激を減らすだけでOK。結果は問わない。\n総括：これは後退ではない。良い流れの中に混じった“揺り戻し”。一晩で評価を下す必要はない。今日は流して、次で立て直せば十分だ。", "steps": 11303, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "2026年度版 みんなが欲しかった！ 宅建士の論点別過去問題集 - 滝澤ななみ", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}, {"title": "デスチェアの殺人上 - M・W・クレイヴン", "finished": true}, {"title": "1週間で勝手にぐっすり眠れる体になるすごい方法 - 石川泰弘", "finished": true}, {"title": "ここにひとつの□がある - 梨", "finished": false}, {"title": "歴史知識ゼロの僕がどうやって18年間歴史マンガ『センゴク』を描き続けられたのか - 宮下英樹", "finished": false}, {"title": "全力化 - ベンジャミン・ハーディ 松丸さとみ", "finished": true}]}, {"date": "2026-02-03", "hours": 7.42, "score": 99, "deep": 2.5, "light": 3.42, "rem": 1.5, "awake": 0.17, "bedtime": "23:45", "waketime": "07:19", "weather": "晴れ", "mood": "また就寝が遅くなってしまった。読みたい本はたくさんあるし、宅建の勉強も始めたし、どうしても夜に詰め込まざるを得ないんだよな…。  \n本当は８時間以上寝たいのだが、自然に目覚めてしまった。ただ、中途覚醒もなくよく眠れたとは思うが。  \nそれでも８時間以上ぐっすり寝たときの爽快感はないかな…まだ眠い感じだ。", "steps": 10074, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の論点別過去問題集 - 滝澤ななみ", "finished": false}, {"title": "全力化 - ベンジャミン・ハーディ 松丸さとみ", "finished": false}, {"title": "ここにひとつの□がある - 梨", "finished": true}, {"title": "死の絆 赤い博物館 - 大山誠一郎", "finished": false}]}, {"date": "2026-02-04", "hours": 5.17, "score": 84, "deep": 1.75, "light": 2.67, "rem": 0.75, "awake": 0.23, "bedtime": "01:58", "waketime": "07:21", "weather": "曇り", "mood": "昨夜は…酷い夜だった。\nObsidianのブックサーチで突如検索が不可となり、Geminiという馬鹿AIに相談。\n頓珍漢なアドバイスを大量にされて無駄足を踏まされ、膨大な時間をロス。\nChatGPT師匠に相談したところ「intitle:表題」で検索してみろと提案されあっさり解決。ChatGPT師匠とGemini差を見せつけられる。\nGeminiという馬鹿AIのせいで貴重な睡眠時間を奪われ、もっと眠りたかったのに自然に目覚めて5時間ちょいしか眠れず…。\nしかも起床後Obsidianのブックサーチを触ってみたら、普通に「表題」のみの検索もできるようになっていた…ただの一時的な不具合だったっぽい…疲れた。", "steps": 10236, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "全力化 - ベンジャミン・ハーディ 松丸さとみ", "finished": true}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の論点別過去問題集 - 滝澤ななみ", "finished": false}, {"title": "死の絆 赤い博物館 - 大山誠一郎", "finished": true}, {"title": "読書を仕事につなげる技術 知識が成果に変わる「読み方＆選び方」の極意 - 山口 周", "finished": true}]}, {"date": "2026-02-05", "hours": 6.42, "score": 85, "deep": 1.92, "light": 3.5, "rem": 1.0, "awake": 0.1, "bedtime": "00:42", "waketime": "07:12", "weather": "時折薄曇りになるが基本晴れ", "mood": "昨夜も読書沼にハマり夜更かし。AIのせいでもなく、紛れもなく自業自得だ。\n読みたい本が多いし、一度読み出すとなかなか止めるのが難しい。\nまあ、仕方ない。眠いが起きて、淡々とやることやって、今夜こそ早く寝よう。\n俺の本気を俺自身に見せてやる。", "steps": 12423, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "巨人のノート 記録は人生を変える最強の武器である - キム・イッカン 米津篤八", "finished": false}, {"title": "復讐は芸術的に - 三日市零", "finished": true}, {"title": "硝子の塔の殺人 - 知念実希人", "finished": false}]}, {"date": "2026-02-06", "hours": 7.92, "score": 96, "deep": 2.92, "light": 4.5, "rem": 0.5, "awake": 0.17, "bedtime": "22:45", "waketime": "06:49", "weather": "晴れ", "mood": "結構たっぷり寝たのだが、体調がよろしくない。\n眠いし何もする気が起きない、動く気が起きない…。\n今日は会社も休んでほぼ一日中家にいた。\n夜になって頭痛もしてきた…駄目だ…今夜は早く休もう。", "steps": 1857, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "硝子の塔の殺人 - 知念実希人", "finished": true}]}, {"date": "2026-02-07", "hours": 7.42, "score": 98, "deep": 2.5, "light": 3.67, "rem": 1.25, "awake": 0.2, "bedtime": "21:08", "waketime": "04:44", "weather": "曇り時々雪", "mood": "昨夜は気分が悪く、ひどい頭痛もしてきて早めに就寝。\n三時過ぎに目覚め、しばらく横になっていたが眠れず、布団の中で読書。その時間も計測上は睡眠していたことになっているが、実際の睡眠時間は６時間ちょいってところか。\nやや不足だが、不思議と眠くない。昨日の倦怠感がウソのように体調も悪くない。とりあえず起床して、やることやろう。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "HIDDEN POTENTIAL 可能性の科学――あなたの限界は、まだ先にある - アダム・グラント", "finished": false}, {"title": "運動の科学 上 運動不足はどれほど健康に影響するか - ダニエル Ｅ リーバーマン", "finished": false}, {"title": "2026年度版 みんなが欲しかった！ 宅建士の教科書 - 滝澤ななみ", "finished": false}]}, {"date": "2026-02-08", "hours": 6.42, "score": 84, "deep": 2.5, "light": 3.0, "rem": 0.92, "awake": 0.15, "bedtime": "00:42", "waketime": "07:15", "weather": "雪だ", "mood": "サッカー観戦で就寝が遅くなってしまった。  \n最近読んだ本で、毎日「８時間睡眠」しなければならないという神話にとらわれるな、６時間から８時間寝れば充分だという主張がされており、確かになと頷けるところもあるのだが…。  \nやはり６時間ちょいの睡眠だと日中とても眠い。  \n脳の起動に時間がかかるというか…常に「寝たい」ということしか考えられなくなってしまう…。", "steps": 10903, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "運動の科学 上 運動不足はどれほど健康に影響するか - ダニエル Ｅ リーバーマン", "finished": true}]}, {"date": "2026-02-09", "hours": 7.08, "score": 95, "deep": 2.42, "light": 4.25, "rem": 0.42, "awake": 0.8, "bedtime": "22:21", "waketime": "06:13", "weather": "曇り", "mood": "う〜ん、駄目だ…。\n寒さで、モニターには計測されない細かい覚醒が夜中に何度もあった。\n起きた直後からずっと眠い。今、昼の１４時半過ぎだが、眠気が強くて使い物にならん。\n俺はもうだめかもしれない…。一月中に取り戻した睡眠の量と質が、２月になってから急速に失われている。元の不眠症体質に戻ってしまった感じだ。ああ、もう俺の人生は終わりだ…。", "steps": 8437, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "運動の科学 下 一生動ける体をつくるには - ダニエル Ｅ リーバーマン", "finished": false}]}, {"date": "2026-02-10", "hours": 5.42, "score": 83, "deep": 1.92, "light": 3.17, "rem": 0.33, "awake": 0.27, "bedtime": "02:26", "waketime": "08:06", "weather": "晴れてよい天気", "mood": "昨日は夜に難しい用事がありその用事を終えたことで一安心してテンションが上がり 、久々にだいぶ遅い時間まで夜更かししてしまった。\n朝は自然に目覚めて、当然 睡眠時間は足りないが、昨日みたいな、朦朧とするような眠らずにはいられないような 日中の眠気は 今のところない。\nもしかしたら俺はむしろ 普段、早めに寝付きすぎて 覚醒時間が早すぎて 日中あんなに眠いのかな？\nむしろ 夜更かしした方がすっきり起きられるのかな…？う〜ん🤔睡眠ってムズいな…。", "steps": 9576, "exercise": {"squat": 100, "abs": 100, "pushup": 50}, "books": [{"title": "運動の科学 下 一生動ける体をつくるには - ダニエル Ｅ リーバーマン", "finished": true}, {"title": "ハウスメイド - フリーダ マクファデン", "finished": false}]}, {"date": "2026-02-11", "hours": 7.42, "score": 98, "deep": 2.5, "light": 3.5, "rem": 1.42, "awake": 0.2, "bedtime": "22:56", "waketime": "06:32", "weather": "雨", "mood": "昨日は半沢直樹の一話目を久しぶりに観てみた。見返してみると「えっ、こんなに面白かったっけ」という感じ。\n引き込まれるシナリオが上手い。\n国税局の監査人のオカマキャラとか、半沢と倒産して雲隠れした社長とのゴルフクラブでの殺陣はどうかと思ったが…まあ連ドラならではの外連味ということでよしとしよう。これから毎日一話ずつ観ていこう。\nドラマ視聴もあって就寝が少し遅くなったが、おおむねよく眠れた。モニターに計測されない中途覚醒が何度かあったが、その度に眠れたのでまあよし。\n今夜は更に就寝時刻を前倒しにするよう励む。", "steps": 10335, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "ハウスメイド - フリーダ マクファデン", "finished": false}]}, {"date": "2026-02-12", "hours": 7.17, "score": 96, "deep": 2.92, "light": 3.75, "rem": 0.5, "awake": 0.17, "bedtime": "00:13", "waketime": "07:32", "weather": "晴れ", "mood": "半沢直樹沼に陥って、テッペンを超えてしまった。\n１話分だけ見るつもりが、第五話まで一気に視聴。\nお陰で、睡眠時間も短めに…。\n今日こそさっさと寝て、心身共に回復させるぜ。", "steps": 10095, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "ハウスメイド - フリーダ マクファデン", "finished": true}, {"title": "100日チャレンジ毎日連続100本アプリを作ったら人生が変わった - 大塚あみ", "finished": false}]}, {"date": "2026-02-13", "hours": 4.33, "score": 64, "deep": 1.83, "light": 1.83, "rem": 0.67, "awake": 0.72, "bedtime": "01:50", "waketime": "06:52", "weather": "曇りのち晴れ", "mood": "昨夜はGoogleのアンチグラビティを初めてダウンロードしていじってみた。  \n熱中してしまってかなりの夜更かし。更に朝、自然に目覚めてしまって睡眠の量と質、ともに最悪。  \n今日一日、かなり辛かったがなんとか乗り切ったぞ！！！  \n今夜こそ早く寝る！！！", "steps": 5520, "exercise": {"squat": 0, "abs": 0, "pushup": 0}, "books": [{"title": "100日チャレンジ毎日連続100本アプリを作ったら人生が変わった - 大塚あみ", "finished": true}, {"title": "古代文字を解読していたら、研究に取り憑かれた話 - 大城道則 青木真兵 大山祐亮 北澤平祐", "finished": true}]}, {"date": "2026-02-14", "hours": 7.0, "score": 93, "deep": 3.42, "light": 2.83, "rem": 0.75, "awake": 0.5, "bedtime": "23:35", "waketime": "07:04", "weather": "晴れ", "mood": "う〜ん、またもや満足のいく睡眠とはならなかった…。\nまず就寝が遅くなった。まあこれは仕方ないとしても、問題は早朝覚醒の方だ。モニター上では７時過ぎまで寝ていたことになっているが、実際は６時ちょいに目覚めた。\nやはり、仕事上の不安やイライラなどが募って心臓がドキドキしてきて自然に目覚めてしまう…。\n俺の睡眠はもう終わりか…。一月の最高の睡眠を連発していた頃が懐かしい。", "steps": 15555, "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "操る男 - 田村和大", "finished": false}]}, {"date": "2026-02-15", "hours": 9.5, "score": 96, "deep": 2.92, "light": 5.75, "rem": 0.83, "awake": 0.18, "bedtime": "21:40", "waketime": "07:20", "weather": "晴れ", "mood": "よく寝た〜〜！！\n久々に満足のいく睡眠が取れた。ここ数日の寝不足を取り戻せた感じだ。中途覚醒はありつつその度にすぐ眠れたので問題なし。\nハッキリとした夢も見たはずなんだが、起床後に忘れてしまった。\nまあとにかく、よく眠れてよかった。今夜もこの流れを継続したいぜ…。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "操る男 - 田村和大", "finished": true}, {"title": "儒教・仏教・道教 東アジアの思想空間 - 菊地章太", "finished": false}]}, {"date": "2026-02-16", "hours": 6.42, "score": 84, "deep": 1.75, "light": 3.92, "rem": 0.75, "awake": 0.3, "bedtime": "01:30", "waketime": "08:12", "weather": "晴れのち薄雲り", "mood": "いや〜、昨日もホントに碌な睡眠を取れなかった。\n深夜までアンチグラビティに熱中してしまい、しかもゴミのような出来栄えのものしか出てこず、ただ時間と貴重な睡眠を無駄にしただけだった。Geminiはホントに使えない…。\nお陰で今日(今、１９時１７分)は１日眠かった。仕事の合間にアンチグラビティを使ったのだが、中のAIをCloudeOpus4.6に変えたら、素晴らしいアプリやObsidianの自動化を見事に成してくれた。Claudeとアンソロピックの凄さを思い知ったね。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "儒教・仏教・道教 東アジアの思想空間 - 菊地章太", "finished": true}, {"title": "デスチェアの殺人 下 - Ｍ Ｗ クレイヴン", "finished": false}]}, {"date": "2026-02-17", "hours": 7.92, "score": 96, "deep": 2.58, "light": 4.5, "rem": 0.83, "awake": 0.22, "bedtime": "22:35", "waketime": "06:42", "weather": "曇り", "mood": "結構よく眠れて満足。\n夜中に何度か目覚めて、自分の鼓動が大きく感じられて再入眠しづらい時間もあったが、結局は眠れたようだ。\nやはり早めの就寝が睡眠の質を握る鍵なのかもしれない。一時期、早めに寝ると夜中の中途覚醒で苦しむということが続いたので、その頃の苦い思い出があるが…。もうそういう時期は脱したのかもしれないな。だとしたら嬉しいのだが。", "exercise": {"squat": 50, "abs": 50, "pushup": 50}, "books": [{"title": "運動の科学 下 一生動ける体をつくるには - ダニエル Ｅ リーバーマン", "finished": false}, {"title": "デスチェアの殺人 下 - Ｍ Ｗ クレイヴン", "finished": false}, {"title": "歴史知識ゼロの僕がどうやって18年間歴史マンガ『センゴク』を描き続けられたのか - 宮下英樹", "finished": true}]}];
+
+        // Index by date
+        const byDate = {};
+        DATA.forEach(d => byDate[d.date] = d);
+
+        // Sorted dates
+        const dates = DATA.map(d => d.date).sort();
+        const today = new Date().toISOString().slice(0, 10);
+        let currentDate = today;
+        let calYear, calMonth;
+
+        // ===== NAV =====
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(btn.dataset.page).classList.add('active');
+            });
+        });
+
+        // ===== HOME =====
+        function renderHome(dateStr) {
+            currentDate = dateStr;
+            const d = byDate[dateStr];
+            const dt = new Date(dateStr + 'T00:00:00');
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            document.getElementById('homeDate').textContent =
+                `${dt.getFullYear()}/${dt.getMonth() + 1}/${dt.getDate()} (${dayNames[dt.getDay()]})`;
+
+            if (!d || (!d.hours && !d.score)) {
+                document.getElementById('noData').style.display = 'block';
+                document.getElementById('scoreRing').style.display = 'none';
+                document.querySelector('.sleep-hours').style.display = 'none';
+                document.getElementById('stageBars').style.display = 'none';
+                document.querySelector('.stage-legend').style.display = 'none';
+                document.getElementById('detailRow').style.display = 'none';
+                document.getElementById('moodCard').style.display = 'none';
+                return;
+            }
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('scoreRing').style.display = 'block';
+            document.querySelector('.sleep-hours').style.display = 'block';
+
+            // Score ring
+            const score = d.score || 0;
+            const circ = 2 * Math.PI * 52;
+            const fg = document.getElementById('scoreFg');
+            fg.style.strokeDasharray = circ;
+            fg.style.strokeDashoffset = circ - (circ * score / 100);
+            fg.style.stroke = score >= 90 ? 'var(--green)' : score >= 80 ? 'var(--yellow)' : 'var(--red)';
+            document.getElementById('scoreNum').textContent = score || '—';
+
+            // Hours
+            if (d.hours) {
+                const hrs = Math.floor(d.hours);
+                const mins = Math.round((d.hours - hrs) * 60);
+                document.getElementById('sleepHours').textContent = `${hrs}h ${mins}m`;
+                document.getElementById('sleepSub').textContent = `${d.hours.toFixed(1)}時間`;
+            } else {
+                document.getElementById('sleepHours').textContent = '—';
+                document.getElementById('sleepSub').textContent = '';
+            }
+
+            // Stage bars
+            const sb = document.getElementById('stageBars');
+            if (d.deep || d.light || d.rem || d.awake) {
+                sb.style.display = 'flex';
+                document.querySelector('.stage-legend').style.display = 'flex';
+                const total = (d.deep || 0) + (d.light || 0) + (d.rem || 0) + (d.awake || 0);
+                sb.innerHTML = '';
+                if (total > 0) {
+                    [{ v: d.deep, c: 'var(--deep)' }, { v: d.light, c: 'var(--light)' },
+                    { v: d.rem, c: 'var(--rem)' }, { v: d.awake, c: 'var(--awake)' }].forEach(s => {
+                        if (s.v) {
+                            const el = document.createElement('div');
+                            el.style.width = (s.v / total * 100) + '%';
+                            el.style.background = s.c;
+                            sb.appendChild(el);
+                        }
+                    });
+                }
+            } else {
+                sb.style.display = 'none';
+                document.querySelector('.stage-legend').style.display = 'none';
+            }
+
+            // Detail row
+            const dr = document.getElementById('detailRow');
+            dr.style.display = 'flex';
+            dr.innerHTML = '';
+            const items = [];
+            if (d.bedtime) items.push({ v: d.bedtime, l: '就寝' });
+            if (d.waketime) items.push({ v: d.waketime, l: '起床' });
+            if (d.deep) items.push({ v: fmtDur(d.deep), l: '深い' });
+            if (d.weather) items.push({ v: d.weather, l: '天気' });
+            items.forEach(it => {
+                dr.innerHTML += `<div class="detail-item"><div class="val">${it.v}</div><div class="lbl">${it.l}</div></div>`;
+            });
+            if (!items.length) dr.style.display = 'none';
+
+            // Mood
+            const mc = document.getElementById('moodCard');
+            if (d.mood) {
+                mc.style.display = 'block';
+                document.getElementById('moodBody').textContent = d.mood;
+            } else {
+                mc.style.display = 'none';
+            }
+        }
+
+        function fmtDur(h) {
+            const hrs = Math.floor(h);
+            const mins = Math.round((h - hrs) * 60);
+            return hrs > 0 ? `${hrs}h${mins}m` : `${mins}m`;
+        }
+
+        function navDay(delta) {
+            const dt = new Date(currentDate + 'T00:00:00');
+            dt.setDate(dt.getDate() + delta);
+            renderHome(dt.toISOString().slice(0, 10));
+        }
+        function navToday() { renderHome(today); }
+
+        // ===== CALENDAR =====
+        function initCal() {
+            const t = new Date();
+            calYear = t.getFullYear();
+            calMonth = t.getMonth();
+            renderCal();
+        }
+
+        function calNav(delta) {
+            calMonth += delta;
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            renderCal();
+        }
+
+        function renderCal() {
+            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            document.getElementById('calTitle').textContent = `${calYear}年 ${monthNames[calMonth]}`;
+
+            // Stats for this month
+            const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+            const monthData = DATA.filter(d => d.date.startsWith(prefix) && d.hours);
+
+            const stats = document.getElementById('calStats');
+            if (monthData.length) {
+                const avgH = monthData.reduce((s, d) => s + d.hours, 0) / monthData.length;
+                const scores = monthData.filter(d => d.score);
+                const avgS = scores.length ? scores.reduce((s, d) => s + d.score, 0) / scores.length : 0;
+                const beds = monthData.filter(d => d.bedtime);
+                let avgBed = '';
+                if (beds.length) {
+                    const total = beds.reduce((s, d) => {
+                        const [h, m] = d.bedtime.split(':').map(Number);
+                        return s + (h < 12 ? h + 24 : h) + m / 60;
+                    }, 0) / beds.length;
+                    const bh = Math.floor(total) % 24;
+                    const bm = Math.round((total % 1) * 60);
+                    avgBed = `${bh}:${String(bm).padStart(2, '0')}`;
+                }
+                stats.innerHTML = `
+      <div class="cal-stat"><div class="v">${avgH.toFixed(1)}h</div><div class="l">平均睡眠</div></div>
+      <div class="cal-stat"><div class="v">${avgS ? avgS.toFixed(0) : '—'}</div><div class="l">平均スコア</div></div>
+      <div class="cal-stat"><div class="v">${avgBed || '—'}</div><div class="l">平均就寝</div></div>
+    `;
+            } else {
+                stats.innerHTML = '<div class="cal-stat" style="grid-column:1/-1"><div class="v">—</div><div class="l">データなし</div></div>';
+            }
+
+            // Grid
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            ['月', '火', '水', '木', '金', '土', '日'].forEach(dow => {
+                grid.innerHTML += `<div class="cal-dow">${dow}</div>`;
+            });
+
+            const firstDay = new Date(calYear, calMonth, 1);
+            let startDow = firstDay.getDay();
+            startDow = startDow === 0 ? 6 : startDow - 1; // Monday=0
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+            for (let i = 0; i < startDow; i++) {
+                grid.innerHTML += '<div class="cal-day empty"></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const d = byDate[ds];
+                const isToday = ds === today;
+                let dotColor = '';
+                if (d && d.score) {
+                    dotColor = d.score >= 90 ? 'var(--green)' : d.score >= 80 ? 'var(--yellow)' : 'var(--red)';
+                }
+                grid.innerHTML += `
+      <div class="cal-day${isToday ? ' today' : ''}" data-date="${ds}" onclick="calSelect('${ds}')">
+        ${day}
+        ${dotColor ? `<div class="dot" style="background:${dotColor}"></div>` : ''}
+      </div>`;
+            }
+
+            document.getElementById('calDetail').innerHTML = '';
+        }
+
+        function calSelect(dateStr) {
+            document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected'));
+            const el = document.querySelector(`.cal-day[data-date="${dateStr}"]`);
+            if (el) el.classList.add('selected');
+
+            const d = byDate[dateStr];
+            const detail = document.getElementById('calDetail');
+            if (!d || (!d.hours && !d.score)) {
+                detail.innerHTML = `<div class="cal-detail"><div class="no-data" style="padding:12px 0">データなし</div></div>`;
+                return;
+            }
+
+            const dt = new Date(dateStr + 'T00:00:00');
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            const dateLabel = `${dt.getMonth() + 1}/${dt.getDate()} (${dayNames[dt.getDay()]})`;
+
+            let html = `<div class="cal-detail"><h3>🌙 ${dateLabel}</h3><div class="cal-detail-grid">`;
+            if (d.hours) html += `<div class="cal-detail-item"><div class="v">${d.hours.toFixed(1)}h</div><div class="l">睡眠時間</div></div>`;
+            if (d.score) html += `<div class="cal-detail-item"><div class="v" style="color:${d.score >= 90 ? 'var(--green)' : d.score >= 80 ? 'var(--yellow)' : 'var(--red)'}">${d.score}</div><div class="l">スコア</div></div>`;
+            if (d.bedtime) html += `<div class="cal-detail-item"><div class="v">${d.bedtime}</div><div class="l">就寝</div></div>`;
+            if (d.waketime) html += `<div class="cal-detail-item"><div class="v">${d.waketime}</div><div class="l">起床</div></div>`;
+            if (d.deep) html += `<div class="cal-detail-item"><div class="v">${fmtDur(d.deep)}</div><div class="l">深い睡眠</div></div>`;
+            if (d.weather) html += `<div class="cal-detail-item"><div class="v">${d.weather}</div><div class="l">天気</div></div>`;
+            html += '</div>';
+
+            if (d.mood) {
+                html += `<div class="mood" style="margin-top:8px"><div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">💭 気分メモ</div>${escHtml(d.mood)}</div>`;
+            }
+
+            html += `<div style="text-align:center;margin-top:12px"><button onclick="renderHome('${dateStr}');document.querySelector('[data-page=pageHome]').click()" style="background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit">詳細を見る</button></div>`;
+            html += '</div>';
+            detail.innerHTML = html;
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        }
+
+        // ===== MONTHLY =====
+        function renderMonthly() {
+            const months = {};
+            DATA.forEach(d => {
+                if (!d.hours) return;
+                const m = d.date.slice(0, 7);
+                if (!months[m]) months[m] = [];
+                months[m].push(d);
+            });
+
+            const list = document.getElementById('monthList');
+            list.innerHTML = '';
+
+            Object.keys(months).sort().reverse().forEach(m => {
+                const ds = months[m];
+                const avgH = ds.reduce((s, d) => s + d.hours, 0) / ds.length;
+                const scores = ds.filter(d => d.score);
+                const avgS = scores.length ? scores.reduce((s, d) => s + d.score, 0) / scores.length : 0;
+                const best = ds.reduce((a, b) => (b.score || 0) > (a.score || 0) ? b : a);
+                const worst = ds.reduce((a, b) => (b.score || 100) < (a.score || 100) ? b : a);
+                const under7 = ds.filter(d => d.hours < 7).length;
+
+                // Average bedtime
+                const beds = ds.filter(d => d.bedtime);
+                let avgBed = '—';
+                if (beds.length) {
+                    const totalBed = beds.reduce((s, d) => {
+                        const [h, mi] = d.bedtime.split(':').map(Number);
+                        return s + (h < 12 ? h + 24 : h) + mi / 60;
+                    }, 0) / beds.length;
+                    const bh = Math.floor(totalBed) % 24;
+                    const bm = Math.round((totalBed % 1) * 60);
+                    avgBed = `${bh}:${String(bm).padStart(2, '0')}`;
+                }
+
+                const [yr, mo] = m.split('-');
+                const label = `${yr}年${parseInt(mo)}月`;
+
+                // Bar: avg hours as % of 10h max
+                const barPct = Math.min(avgH / 10 * 100, 100);
+                const barColor = avgH >= 7.5 ? 'var(--green)' : avgH >= 7 ? 'var(--yellow)' : 'var(--red)';
+
+                let html = `<div class="month-card" onclick="toggleMonthDetail(this)">
+      <h3>${label}</h3>
+      <div class="month-stats">
+        <div class="month-stat"><div class="v">${avgH.toFixed(1)}h</div><div class="l">平均睡眠</div></div>
+        <div class="month-stat"><div class="v">${avgS ? avgS.toFixed(0) : '—'}</div><div class="l">平均スコア</div></div>
+        <div class="month-stat"><div class="v">${avgBed}</div><div class="l">平均就寝</div></div>
+      </div>
+      <div class="month-bar">
+        <div class="month-bar-track"><div class="month-bar-fill" style="width:${barPct}%;background:${barColor}"></div></div>
+        <div class="month-bar-label">${ds.length}日記録</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text3)">
+        <span>7h未満: ${under7}日</span>
+        <span>ベスト: ${best.date.slice(5)} (${best.score || '—'})</span>
+      </div>
+      <div class="month-detail-days">`;
+
+                // Per-day bars
+                ds.sort((a, b) => a.date.localeCompare(b.date)).forEach(dd => {
+                    const dayNum = parseInt(dd.date.slice(8));
+                    const pct = Math.min(dd.hours / 10 * 100, 100);
+                    const col = dd.hours >= 7.5 ? 'var(--green)' : dd.hours >= 7 ? 'var(--yellow)' : 'var(--red)';
+                    html += `<div class="mini-day">
+        <span class="d">${dayNum}日</span>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="hrs">${dd.hours.toFixed(1)}h</span>
+        <span class="sc">${dd.score || ''}</span>
+      </div>`;
+                });
+
+                html += '</div></div>';
+                list.innerHTML += html;
+            });
+        }
+
+        function toggleMonthDetail(card) {
+            card.classList.toggle('expanded');
+        }
+
+        // ===== INIT =====
+        renderHome(today);
+        initCal();
+        renderMonthly();
+
+        // Swipe support
+        let touchStartX = 0;
+        document.getElementById('pageHome').addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        document.getElementById('pageHome').addEventListener('touchend', e => {
+            const diff = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(diff) > 60) navDay(diff > 0 ? -1 : 1);
+        }, { passive: true });
+    </script>
+</body>
+
+</html>
