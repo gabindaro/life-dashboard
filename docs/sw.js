@@ -1,6 +1,6 @@
-const CACHE = 'life-dashboard-v1';
+const CACHE = 'life-dashboard-v2';
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html'])));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'sleep.html'])));
   self.skipWaiting();
 });
 self.addEventListener('fetch', e => {
