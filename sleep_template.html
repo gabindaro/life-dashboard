@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🌙 睡眠記録</title>
+    <link rel="manifest" href="sleep-manifest.json">
+    <meta name="theme-color" content="#0f0a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0f0a2e;
+            --bg2: #1a1245;
+            --bg3: #251c5a;
+            --card: #1e1650;
+            --card2: #2a2065;
+            --text: #e8e4f5;
+            --text2: #a89fd4;
+            --text3: #6e65a0;
+            --accent: #7c5cff;
+            --accent2: #a78bfa;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --orange: #fb923c;
+            --deep: #6366f1;
+            --light: #818cf8;
+            --rem: #a78bfa;
+            --awake: #f97316;
+            --ring-size: 160px;
+        }
+
+        html,
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* === NAV === */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: linear-gradient(180deg, transparent, var(--bg) 20%);
+            padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 420px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: 20px;
+            padding: 6px 12px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, .4);
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: var(--text3);
+            font-size: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: .2s;
+            border-radius: 12px;
+            font-family: inherit;
+        }
+
+        .nav-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8
+        }
+
+        .nav-btn.active {
+            color: var(--accent2);
+            background: rgba(124, 92, 255, .12)
+        }
+
+        .nav-btn:active {
+            transform: scale(.92)
+        }
+
+        /* === PAGES === */
+        .page {
+            display: none;
+            padding: 16px 16px 100px;
+            max-width: 480px;
+            margin: 0 auto;
+            animation: fadeIn .3s
+        }
+
+        .page.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        /* === HOME === */
+        .home-header {
+            text-align: center;
+            padding: 12px 0 8px
+        }
+
+        .home-date {
+            font-size: 13px;
+            color: var(--text2);
+            font-weight: 500
+        }
+
+        .home-label {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .score-ring {
+            position: relative;
+            width: var(--ring-size);
+            height: var(--ring-size);
+            margin: 20px auto;
+        }
+
+        .score-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg)
+        }
+
+        .score-ring .bg {
+            stroke: var(--bg3);
+            stroke-width: 8;
+            fill: none
+        }
+
+        .score-ring .fg {
+            stroke-width: 8;
+            fill: none;
+            stroke-linecap: round;
+            transition: stroke-dashoffset .8s ease
+        }
+
+        .score-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .score-num {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -2px
+        }
+
+        .score-unit {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: -4px
+        }
+
+        .sleep-hours {
+            text-align: center;
+            margin: 8px 0 16px
+        }
+
+        .sleep-hours .h {
+            font-size: 28px;
+            font-weight: 600
+        }
+
+        .sleep-hours .sub {
+            font-size: 12px;
+            color: var(--text2)
+        }
+
+        .stage-bars {
+            display: flex;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 8px 8px;
+            background: var(--bg3);
+        }
+
+        .stage-bars div {
+            height: 100%;
+            transition: width .6s ease
+        }
+
+        .stage-legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stage-legend span {
+            font-size: 10px;
+            color: var(--text2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stage-legend span::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .stage-legend .st-deep::before {
+            background: var(--deep)
+        }
+
+        .stage-legend .st-light::before {
+            background: var(--light)
+        }
+
+        .stage-legend .st-rem::before {
+            background: var(--rem)
+        }
+
+        .stage-legend .st-awake::before {
+            background: var(--awake)
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .detail-item {
+            text-align: center
+        }
+
+        .detail-item .val {
+            font-size: 16px;
+            font-weight: 600
+        }
+
+        .detail-item .lbl {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .mood-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .mood-card .title {
+            font-size: 11px;
+            color: var(--text3);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .mood-card .body {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text2);
+            white-space: pre-wrap
+        }
+
+        .day-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .day-nav button {
+            background: var(--card);
+            border: none;
+            color: var(--text2);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .day-nav button:active {
+            background: var(--accent);
+            color: #fff;
+            transform: scale(.9)
+        }
+
+        .day-nav .today-btn {
+            font-size: 11px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            width: auto;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--text3);
+            padding: 40px 0;
+            font-size: 14px
+        }
+
+        /* === CALENDAR === */
+        .cal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 16px;
+        }
+
+        .cal-header h2 {
+            font-size: 18px;
+            font-weight: 600
+        }
+
+        .cal-header button {
+            background: var(--card);
+            border: none;
+            color: var(--text);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cal-header button:active {
+            background: var(--accent)
+        }
+
+        .cal-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .cal-stat {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .cal-stat .v {
+            font-size: 18px;
+            font-weight: 700
+        }
+
+        .cal-stat .l {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center
+        }
+
+        .cal-dow {
+            font-size: 10px;
+            color: var(--text3);
+            padding: 4px 0;
+            font-weight: 600
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: .15s;
+            font-size: 13px;
+            position: relative;
+        }
+
+        .cal-day:hover {
+            background: var(--bg3)
+        }
+
+        .cal-day.today {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px
+        }
+
+        .cal-day.selected {
+            background: var(--accent) !important;
+            color: #fff
+        }
+
+        .cal-day .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+        }
+
+        .cal-day.empty {
+            pointer-events: none
+        }
+
+        /* Detail popup */
+        .cal-detail {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 12px;
+            border: 1px solid rgba(124, 92, 255, .2);
+            animation: fadeIn .2s;
+        }
+
+        .cal-detail h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px
+        }
+
+        .cal-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .cal-detail-item {
+            background: var(--bg3);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .cal-detail-item .v {
+            font-size: 16px;
+            font-weight: 600
+        }
+
+        .cal-detail-item .l {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .cal-detail .mood {
+            background: var(--bg3);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text2);
+            white-space: pre-wrap;
+        }
+
+        /* === MONTHLY === */
+        .month-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, .04);
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .month-card:active {
+            transform: scale(.98)
+        }
+
+        .month-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px
+        }
+
+        .month-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px
+        }
+
+        .month-stat {
+            text-align: center
+        }
+
+        .month-stat .v {
+            font-size: 20px;
+            font-weight: 700
+        }
+
+        .month-stat .l {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .month-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .month-bar-track {
+            flex: 1;
+            height: 6px;
+            background: var(--bg3);
+            border-radius: 3px;
+            overflow: hidden
+        }
+
+        .month-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .6s
+        }
+
+        .month-bar-label {
+            font-size: 10px;
+            color: var(--text3);
+            min-width: 50px
+        }
+
+        .month-detail-days {
+            margin-top: 12px;
+            display: none
+        }
+
+        .month-card.expanded .month-detail-days {
+            display: block
+        }
+
+        .mini-day {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            border-top: 1px solid rgba(255, 255, 255, .04);
+            font-size: 12px;
+            gap: 8px;
+        }
+
+        .mini-day .d {
+            width: 48px;
+            color: var(--text3);
+            font-weight: 500
+        }
+
+        .mini-day .bar {
+            flex: 1;
+            height: 4px;
+            background: var(--bg3);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .mini-day .bar-fill {
+            height: 100%;
+            border-radius: 2px
+        }
+
+        .mini-day .hrs {
+            width: 40px;
+            text-align: right;
+            font-weight: 500
+        }
+
+        .mini-day .sc {
+            width: 28px;
+            text-align: right;
+            color: var(--text2);
+            font-size: 11px
+        }
+
+        /* PC Layout */
+        @media(min-width:768px) {
+            .page {
+                max-width: 560px;
+                padding: 24px 24px 100px
+            }
+
+            .score-ring {
+                --ring-size: 180px
+            }
+
+            .nav-inner {
+                max-width: 480px
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HOME -->
+    <div id="pageHome" class="page active">
+        <div class="home-header">
+            <div class="home-date" id="homeDate"></div>
+            <div class="home-label">睡眠記録</div>
+        </div>
+        <div class="day-nav">
+            <button onclick="navDay(-1)">◀</button>
+            <button class="today-btn" onclick="navToday()">今日</button>
+            <button onclick="navDay(1)">▶</button>
+        </div>
+        <div class="score-ring" id="scoreRing">
+            <svg viewBox="0 0 120 120">
+                <circle class="bg" cx="60" cy="60" r="52" />
+                <circle class="fg" id="scoreFg" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="score-center">
+                <div class="score-num" id="scoreNum">—</div>
+                <div class="score-unit">スコア</div>
+            </div>
+        </div>
+        <div class="sleep-hours">
+            <div class="h" id="sleepHours">—</div>
+            <div class="sub" id="sleepSub"></div>
+        </div>
+        <div class="stage-bars" id="stageBars"></div>
+        <div class="stage-legend">
+            <span class="st-deep">深い</span>
+            <span class="st-light">ライト</span>
+            <span class="st-rem">レム</span>
+            <span class="st-awake">覚醒</span>
+        </div>
+        <div class="detail-row" id="detailRow"></div>
+        <div class="mood-card" id="moodCard" style="display:none">
+            <div class="title">💭 気分メモ</div>
+            <div class="body" id="moodBody"></div>
+        </div>
+        <div class="day-nav" style="margin-top:16px">
+            <button onclick="navDay(-1)">◀</button>
+            <button class="today-btn" onclick="navToday()">今日</button>
+            <button onclick="navDay(1)">▶</button>
+        </div>
+        <div class="no-data" id="noData" style="display:none">この日のデータはありません</div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="pageCal" class="page">
+        <div class="cal-header">
+            <button onclick="calNav(-1)">◀</button>
+            <h2 id="calTitle"></h2>
+            <button onclick="calNav(1)">▶</button>
+        </div>
+        <div class="cal-stats" id="calStats"></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div id="calDetail"></div>
+    </div>
+
+    <!-- MONTHLY -->
+    <div id="pageMonth" class="page">
+        <h2 style="font-size:18px;font-weight:600;padding:8px 0 16px">📊 月別サマリー</h2>
+        <div id="monthList"></div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <button class="nav-btn active" data-page="pageHome">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                今日
+            </button>
+            <button class="nav-btn" data-page="pageCal">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                カレンダー
+            </button>
+            <button class="nav-btn" data-page="pageMonth">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                </svg>
+                月別
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const DATA = __SLEEP_JSON__;
+
+        // Index by date
+        const byDate = {};
+        DATA.forEach(d => byDate[d.date] = d);
+
+        // Sorted dates
+        const dates = DATA.map(d => d.date).sort();
+        function fmtDate(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        const today = fmtDate(new Date());
+        let currentDate = today;
+        let calYear, calMonth;
+
+        // ===== NAV =====
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(btn.dataset.page).classList.add('active');
+            });
+        });
+
+        // ===== HOME =====
+        function renderHome(dateStr) {
+            currentDate = dateStr;
+            const d = byDate[dateStr];
+            const dt = new Date(dateStr + 'T00:00:00');
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            document.getElementById('homeDate').textContent =
+                `${dt.getFullYear()}/${dt.getMonth() + 1}/${dt.getDate()} (${dayNames[dt.getDay()]})`;
+
+            if (!d || (!d.hours && !d.score)) {
+                document.getElementById('noData').style.display = 'block';
+                document.getElementById('scoreRing').style.display = 'none';
+                document.querySelector('.sleep-hours').style.display = 'none';
+                document.getElementById('stageBars').style.display = 'none';
+                document.querySelector('.stage-legend').style.display = 'none';
+                document.getElementById('detailRow').style.display = 'none';
+                document.getElementById('moodCard').style.display = 'none';
+                return;
+            }
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('scoreRing').style.display = 'block';
+            document.querySelector('.sleep-hours').style.display = 'block';
+
+            // Score ring
+            const score = d.score || 0;
+            const circ = 2 * Math.PI * 52;
+            const fg = document.getElementById('scoreFg');
+            fg.style.strokeDasharray = circ;
+            fg.style.strokeDashoffset = circ - (circ * score / 100);
+            fg.style.stroke = score >= 90 ? 'var(--green)' : score >= 80 ? 'var(--yellow)' : 'var(--red)';
+            document.getElementById('scoreNum').textContent = score || '—';
+
+            // Hours
+            if (d.hours) {
+                const hrs = Math.floor(d.hours);
+                const mins = Math.round((d.hours - hrs) * 60);
+                document.getElementById('sleepHours').textContent = `${hrs}h ${mins}m`;
+                document.getElementById('sleepSub').textContent = `${d.hours.toFixed(1)}時間`;
+            } else {
+                document.getElementById('sleepHours').textContent = '—';
+                document.getElementById('sleepSub').textContent = '';
+            }
+
+            // Stage bars
+            const sb = document.getElementById('stageBars');
+            if (d.deep || d.light || d.rem || d.awake) {
+                sb.style.display = 'flex';
+                document.querySelector('.stage-legend').style.display = 'flex';
+                const total = (d.deep || 0) + (d.light || 0) + (d.rem || 0) + (d.awake || 0);
+                sb.innerHTML = '';
+                if (total > 0) {
+                    [{ v: d.deep, c: 'var(--deep)' }, { v: d.light, c: 'var(--light)' },
+                    { v: d.rem, c: 'var(--rem)' }, { v: d.awake, c: 'var(--awake)' }].forEach(s => {
+                        if (s.v) {
+                            const el = document.createElement('div');
+                            el.style.width = (s.v / total * 100) + '%';
+                            el.style.background = s.c;
+                            sb.appendChild(el);
+                        }
+                    });
+                }
+            } else {
+                sb.style.display = 'none';
+                document.querySelector('.stage-legend').style.display = 'none';
+            }
+
+            // Detail row
+            const dr = document.getElementById('detailRow');
+            dr.style.display = 'flex';
+            dr.innerHTML = '';
+            const items = [];
+            if (d.bedtime) items.push({ v: d.bedtime, l: '就寝' });
+            if (d.waketime) items.push({ v: d.waketime, l: '起床' });
+            if (d.deep) items.push({ v: fmtDur(d.deep), l: '深い' });
+            if (d.weather) items.push({ v: d.weather, l: '天気' });
+            items.forEach(it => {
+                dr.innerHTML += `<div class="detail-item"><div class="val">${it.v}</div><div class="lbl">${it.l}</div></div>`;
+            });
+            if (!items.length) dr.style.display = 'none';
+
+            // Mood
+            const mc = document.getElementById('moodCard');
+            if (d.mood) {
+                mc.style.display = 'block';
+                document.getElementById('moodBody').textContent = d.mood;
+            } else {
+                mc.style.display = 'none';
+            }
+        }
+
+        function fmtDur(h) {
+            const hrs = Math.floor(h);
+            const mins = Math.round((h - hrs) * 60);
+            return hrs > 0 ? `${hrs}h${mins}m` : `${mins}m`;
+        }
+
+        function navDay(delta) {
+            const dt = new Date(currentDate + 'T00:00:00');
+            // Try up to 60 days to find a day with data
+            for (let i = 0; i < 60; i++) {
+                dt.setDate(dt.getDate() + (i === 0 ? delta : (delta > 0 ? 1 : -1)));
+                const ds = fmtDate(dt);
+                if (byDate[ds]) {
+                    renderHome(ds);
+                    return;
+                }
+            }
+            // If no data found within range, just go one day
+            const fallback = new Date(currentDate + 'T00:00:00');
+            fallback.setDate(fallback.getDate() + delta);
+            renderHome(fmtDate(fallback));
+        }
+
+        function navToday() {
+            renderHome(today);
+        }
+
+        // ===== CALENDAR =====
+        function initCal() {
+            const t = new Date();
+            calYear = t.getFullYear();
+            calMonth = t.getMonth();
+            renderCal();
+        }
+
+        function calNav(delta) {
+            calMonth += delta;
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            renderCal();
+        }
+
+        function renderCal() {
+            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            document.getElementById('calTitle').textContent = `${calYear}年 ${monthNames[calMonth]}`;
+
+            // Stats for this month
+            const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+            const monthData = DATA.filter(d => d.date.startsWith(prefix) && d.hours);
+
+            const stats = document.getElementById('calStats');
+            if (monthData.length) {
+                const avgH = monthData.reduce((s, d) => s + d.hours, 0) / monthData.length;
+                const scores = monthData.filter(d => d.score);
+                const avgS = scores.length ? scores.reduce((s, d) => s + d.score, 0) / scores.length : 0;
+                const beds = monthData.filter(d => d.bedtime);
+                let avgBed = '';
+                if (beds.length) {
+                    const total = beds.reduce((s, d) => {
+                        const [h, m] = d.bedtime.split(':').map(Number);
+                        return s + (h < 12 ? h + 24 : h) + m / 60;
+                    }, 0) / beds.length;
+                    const bh = Math.floor(total) % 24;
+                    const bm = Math.round((total % 1) * 60);
+                    avgBed = `${bh}:${String(bm).padStart(2, '0')}`;
+                }
+                stats.innerHTML = `
+      <div class="cal-stat"><div class="v">${avgH.toFixed(1)}h</div><div class="l">平均睡眠</div></div>
+      <div class="cal-stat"><div class="v">${avgS ? avgS.toFixed(0) : '—'}</div><div class="l">平均スコア</div></div>
+      <div class="cal-stat"><div class="v">${avgBed || '—'}</div><div class="l">平均就寝</div></div>
+    `;
+            } else {
+                stats.innerHTML = '<div class="cal-stat" style="grid-column:1/-1"><div class="v">—</div><div class="l">データなし</div></div>';
+            }
+
+            // Grid
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            ['月', '火', '水', '木', '金', '土', '日'].forEach(dow => {
+                grid.innerHTML += `<div class="cal-dow">${dow}</div>`;
+            });
+
+            const firstDay = new Date(calYear, calMonth, 1);
+            let startDow = firstDay.getDay();
+            startDow = startDow === 0 ? 6 : startDow - 1; // Monday=0
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+            for (let i = 0; i < startDow; i++) {
+                grid.innerHTML += '<div class="cal-day empty"></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const d = byDate[ds];
+                const isToday = ds === today;
+                let dotColor = '';
+                if (d && d.score) {
+                    dotColor = d.score >= 90 ? 'var(--green)' : d.score >= 80 ? 'var(--yellow)' : 'var(--red)';
+                }
+                grid.innerHTML += `
+      <div class="cal-day${isToday ? ' today' : ''}" data-date="${ds}" onclick="calSelect('${ds}')">
+        ${day}
+        ${dotColor ? `<div class="dot" style="background:${dotColor}"></div>` : ''}
+      </div>`;
+            }
+
+            document.getElementById('calDetail').innerHTML = '';
+        }
+
+        function calSelect(dateStr) {
+            document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected'));
+            const el = document.querySelector(`.cal-day[data-date="${dateStr}"]`);
+            if (el) el.classList.add('selected');
+
+            const d = byDate[dateStr];
+            const detail = document.getElementById('calDetail');
+            if (!d || (!d.hours && !d.score)) {
+                detail.innerHTML = `<div class="cal-detail"><div class="no-data" style="padding:12px 0">データなし</div></div>`;
+                return;
+            }
+
+            const dt = new Date(dateStr + 'T00:00:00');
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            const dateLabel = `${dt.getMonth() + 1}/${dt.getDate()} (${dayNames[dt.getDay()]})`;
+
+            let html = `<div class="cal-detail"><h3>🌙 ${dateLabel}</h3><div class="cal-detail-grid">`;
+            if (d.hours) html += `<div class="cal-detail-item"><div class="v">${d.hours.toFixed(1)}h</div><div class="l">睡眠時間</div></div>`;
+            if (d.score) html += `<div class="cal-detail-item"><div class="v" style="color:${d.score >= 90 ? 'var(--green)' : d.score >= 80 ? 'var(--yellow)' : 'var(--red)'}">${d.score}</div><div class="l">スコア</div></div>`;
+            if (d.bedtime) html += `<div class="cal-detail-item"><div class="v">${d.bedtime}</div><div class="l">就寝</div></div>`;
+            if (d.waketime) html += `<div class="cal-detail-item"><div class="v">${d.waketime}</div><div class="l">起床</div></div>`;
+            if (d.deep) html += `<div class="cal-detail-item"><div class="v">${fmtDur(d.deep)}</div><div class="l">深い睡眠</div></div>`;
+            if (d.weather) html += `<div class="cal-detail-item"><div class="v">${d.weather}</div><div class="l">天気</div></div>`;
+            html += '</div>';
+
+            if (d.mood) {
+                html += `<div class="mood" style="margin-top:8px"><div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">💭 気分メモ</div>${escHtml(d.mood)}</div>`;
+            }
+
+            html += `<div style="text-align:center;margin-top:12px"><button onclick="renderHome('${dateStr}');document.querySelector('[data-page=pageHome]').click()" style="background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit">詳細を見る</button></div>`;
+            html += '</div>';
+            detail.innerHTML = html;
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        }
+
+        // ===== MONTHLY =====
+        function renderMonthly() {
+            const months = {};
+            DATA.forEach(d => {
+                if (!d.hours) return;
+                const m = d.date.slice(0, 7);
+                if (!months[m]) months[m] = [];
+                months[m].push(d);
+            });
+
+            const list = document.getElementById('monthList');
+            list.innerHTML = '';
+
+            Object.keys(months).sort().reverse().forEach(m => {
+                const ds = months[m];
+                const avgH = ds.reduce((s, d) => s + d.hours, 0) / ds.length;
+                const scores = ds.filter(d => d.score);
+                const avgS = scores.length ? scores.reduce((s, d) => s + d.score, 0) / scores.length : 0;
+                const best = ds.reduce((a, b) => (b.score || 0) > (a.score || 0) ? b : a);
+                const worst = ds.reduce((a, b) => (b.score || 100) < (a.score || 100) ? b : a);
+                const under7 = ds.filter(d => d.hours < 7).length;
+
+                // Average bedtime
+                const beds = ds.filter(d => d.bedtime);
+                let avgBed = '—';
+                if (beds.length) {
+                    const totalBed = beds.reduce((s, d) => {
+                        const [h, mi] = d.bedtime.split(':').map(Number);
+                        return s + (h < 12 ? h + 24 : h) + mi / 60;
+                    }, 0) / beds.length;
+                    const bh = Math.floor(totalBed) % 24;
+                    const bm = Math.round((totalBed % 1) * 60);
+                    avgBed = `${bh}:${String(bm).padStart(2, '0')}`;
+                }
+
+                const [yr, mo] = m.split('-');
+                const label = `${yr}年${parseInt(mo)}月`;
+
+                // Bar: avg hours as % of 10h max
+                const barPct = Math.min(avgH / 10 * 100, 100);
+                const barColor = avgH >= 7.5 ? 'var(--green)' : avgH >= 7 ? 'var(--yellow)' : 'var(--red)';
+
+                let html = `<div class="month-card" onclick="toggleMonthDetail(this)">
+      <h3>${label}</h3>
+      <div class="month-stats">
+        <div class="month-stat"><div class="v">${avgH.toFixed(1)}h</div><div class="l">平均睡眠</div></div>
+        <div class="month-stat"><div class="v">${avgS ? avgS.toFixed(0) : '—'}</div><div class="l">平均スコア</div></div>
+        <div class="month-stat"><div class="v">${avgBed}</div><div class="l">平均就寝</div></div>
+      </div>
+      <div class="month-bar">
+        <div class="month-bar-track"><div class="month-bar-fill" style="width:${barPct}%;background:${barColor}"></div></div>
+        <div class="month-bar-label">${ds.length}日記録</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text3)">
+        <span>7h未満: ${under7}日</span>
+        <span>ベスト: ${best.date.slice(5)} (${best.score || '—'})</span>
+      </div>
+      <div class="month-detail-days">`;
+
+                // Per-day bars
+                ds.sort((a, b) => a.date.localeCompare(b.date)).forEach(dd => {
+                    const dayNum = parseInt(dd.date.slice(8));
+                    const pct = Math.min(dd.hours / 10 * 100, 100);
+                    const col = dd.hours >= 7.5 ? 'var(--green)' : dd.hours >= 7 ? 'var(--yellow)' : 'var(--red)';
+                    html += `<div class="mini-day">
+        <span class="d">${dayNum}日</span>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="hrs">${dd.hours.toFixed(1)}h</span>
+        <span class="sc">${dd.score || ''}</span>
+      </div>`;
+                });
+
+                html += '</div></div>';
+                list.innerHTML += html;
+            });
+        }
+
+        function toggleMonthDetail(card) {
+            card.classList.toggle('expanded');
+        }
+
+        // ===== INIT =====
+        renderHome(today);
+        initCal();
+        renderMonthly();
+
+        // Swipe support
+        let touchStartX = 0;
+        document.getElementById('pageHome').addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        document.getElementById('pageHome').addEventListener('touchend', e => {
+            const diff = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(diff) > 60) navDay(diff > 0 ? -1 : 1);
+        }, { passive: true });
+    </script>
+</body>
+
+</html>

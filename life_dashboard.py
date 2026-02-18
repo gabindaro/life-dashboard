@@ -92,11 +92,15 @@ def parse_sleep_details(text: str) -> dict:
         weather = re.split(r'[。、\.!！]', m.group(1).strip())[0].strip()
         d['weather'] = weather
 
-    m = re.search(r'気分::(.+)', text)
+    m = re.search(r'気分::(.+)', text, re.DOTALL)
     if m:
-        mood = m.group(1).strip()
-        if len(mood) > 80: mood = mood[:80] + "…"
-        d['mood'] = mood
+        # Get full mood text (multi-line until next section)
+        mood_raw = m.group(1).strip()
+        # Cut at next section header
+        cut = re.search(r'\n-\s+\S+::', mood_raw)
+        if cut:
+            mood_raw = mood_raw[:cut.start()].strip()
+        d['mood'] = mood_raw
 
     m = re.search(r'歩数::\s*([\d,]+)\s*歩', text)
     if m: d['steps'] = int(m.group(1).replace(',', ''))
@@ -599,6 +603,20 @@ def main():
     vault_html = VAULT_DIR / "睡眠ダッシュボード.html"
     vault_html.write_text(html, encoding='utf-8')
     print(f"   ✓ {vault_html}")
+
+    # Generate Sleep App
+    print("\n🌙 睡眠記録アプリ生成中...")
+    sleep_template_path = SCRIPT_DIR / "sleep_template.html"
+    if sleep_template_path.exists():
+        sleep_data = [d for d in data if d.get('hours') or d.get('score')]
+        sleep_json = json.dumps(sleep_data, ensure_ascii=False)
+        sleep_html = sleep_template_path.read_text(encoding='utf-8')
+        sleep_html = sleep_html.replace('__SLEEP_JSON__', sleep_json)
+        sleep_path = DOCS_DIR / "sleep.html"
+        sleep_path.write_text(sleep_html, encoding='utf-8')
+        print(f"   ✓ {sleep_path}")
+    else:
+        print(f"   ⚠️ 睡眠テンプレートが見つかりません: {sleep_template_path}")
 
     # Deploy
     if args.deploy:
