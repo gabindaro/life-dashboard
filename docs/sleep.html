@@ -747,7 +747,13 @@
 
         // Sorted dates
         const dates = DATA.map(d => d.date).sort();
-        const today = new Date().toISOString().slice(0, 10);
+        function fmtDate(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        const today = fmtDate(new Date());
         let currentDate = today;
         let calYear, calMonth;
 
@@ -862,7 +868,7 @@
             // Try up to 60 days to find a day with data
             for (let i = 0; i < 60; i++) {
                 dt.setDate(dt.getDate() + (i === 0 ? delta : (delta > 0 ? 1 : -1)));
-                const ds = dt.toISOString().slice(0, 10);
+                const ds = fmtDate(dt);
                 if (byDate[ds]) {
                     renderHome(ds);
                     return;
@@ -871,7 +877,7 @@
             // If no data found within range, just go one day
             const fallback = new Date(currentDate + 'T00:00:00');
             fallback.setDate(fallback.getDate() + delta);
-            renderHome(fallback.toISOString().slice(0, 10));
+            renderHome(fmtDate(fallback));
         }
 
         function navToday() {
